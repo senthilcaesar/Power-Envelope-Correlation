@@ -19,12 +19,33 @@ def general_info(raw):
     print(f'Difference between 1,2,3 sec as index {np.diff(raw.time_as_index([1, 2, 3]))}')
     print('-------------------------------------------------------------------')
 
+
+def plot_event(events):
+    event_dict = {'auditory/left': 256, 'auditory/right': 768, 'visual/left': 1792,
+              'visual/right': 3840, 'smiley': 7936}
+
+    fig = mne.viz.plot_events(events, sfreq=raw.info['sfreq'],
+                              first_samp=raw.first_samp, event_id=event_dict)
+    fig.subplots_adjust(right=0.7)  # make room for legend
+
+    raw.plot(events=events, start=5, duration=10, color='gray',
+             event_color={256: 'r', 768: 'g', 1792: 'b', 3840: 'm', 7936: 'y'}, block=True)
+
+
 cases_f = '/home/senthil/caesar/camcan/cc700/meg/pipeline/release004/BIDS_20190411/meg_rest_raw/cases.txt'
 with open(cases_f) as f:
     case_list = f.read().splitlines()
 
-fname = case_list[50]
+fname = case_list[120]
+print(fname)
 raw = mne.io.read_raw_fif(fname, verbose='error')
 general_info(raw)
+#raw.plot(block=True)
+events = mne.find_events(raw, stim_channel=['STI201','STI101','STI003'], uint_cast=True, initial_event=True, verbose=False)
+print(f"Shape of STIM events numpy array {np.shape(events)}")
+print("Event array = (Index of event, Length of the event, Event type)")
+print(f"STIM Event IDs: {np.unique(events[:,2])}\n")
+print(events)
+#plot_event(events)
 
 
