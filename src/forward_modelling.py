@@ -36,8 +36,8 @@ def plot_registration(info, trans, subject, subjects_dir):
                         meg=True, subjects_dir=subjects_dir,
                         coord_frame='head')
     set_3d_view(figure=fig, azimuth=135, elevation=80)
-    mlab.savefig('/home/senthil/Desktop/coreg.jpg')
-    Image(filename='/home/senthil/Desktop/coreg.jpg', width=500)
+    mlab.savefig('/Users/senthilp/Desktop/coreg.jpg')
+    Image(filename='/Users/senthilp/Desktop/coreg.jpg', width=500)
     mlab.show()
 
 
@@ -68,18 +68,18 @@ def compute_SS(subject, subjects_dir):
     return src
 
 
-def forward_model(subject, subjects_dir, fname_meg, trans, src):
+def forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname):
     conductivity = (0.3, 0.006, 0.3)  # for three layers
     model = mne.make_bem_model(subject=subject, ico=4,
                             conductivity=conductivity,
                             subjects_dir=subjects_dir)
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(fname_meg, trans=trans, src=src, bem=bem,
-                                    meg=True, eeg=False, mindist=5.0, n_jobs=32)
+                                    meg=True, eeg=False, mindist=5.0, n_jobs=2)
     print(fwd)
+    mne.write_forward_solution(fwd_fname, fwd, overwrite=True, verbose=None)
     leadfield = fwd['sol']['data']
     print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
-    return fwd
 
 
 def sensitivty_plot(subject, subjects_dir, fwd):
@@ -112,36 +112,40 @@ def sensitivty_plot(subject, subjects_dir, fwd):
     clim = dict(kind='percent', lims=(0.0, 50, 95), smoothing_steps=3)  # let's see single dipoles
     brain = grad_map.plot(subject=subject, time_label='GRAD sensitivity', surface='inflated',
                         subjects_dir=subjects_dir, clim=clim, smoothing_steps=8, alpha=0.85)
+    mlab.show()
     view = 'lat'
     brain.show_view(view)
     brain.save_image(f'sensitivity_map_grad_{view}.jpg')
     Image(filename=f'sensitivity_map_grad_{view}.jpg', width=400)
 
 
-cases_meg = '/home/senthil/caesar/camcan/cc700/meg/pipeline/release004/BIDS_20190411/meg_rest_raw/cases.txt'
-cases_T1 = '/home/senthil/caesar/camcan/cc700/mri/pipeline/release004/BIDS_20190411/anat/cases.txt'
-with open(cases_meg) as f:
-    case_meg_list = f.read().splitlines()
-with open(cases_T1) as f:
-    cases_T1_list = f.read().splitlines()
+# cases_meg = '/home/senthil/caesar/camcan/cc700/meg/pipeline/release004/BIDS_20190411/meg_rest_raw/cases.txt'
+# cases_T1 = '/home/senthil/caesar/camcan/cc700/mri/pipeline/release004/BIDS_20190411/anat/cases.txt'
+# with open(cases_meg) as f:
+#     case_meg_list = f.read().splitlines()
+# with open(cases_T1) as f:
+#     cases_T1_list = f.read().splitlines()
 
-fname_meg = case_meg_list[120]
-fname_T1 = cases_T1_list[120]
-print(fname_meg, fname_T1)
+# fname_meg = case_meg_list[120]
+# fname_T1 = cases_T1_list[120]
+# print(fname_meg, fname_T1)
 
 subject='sub-CC221373'
-subjects_dir='/home/senthil/Downloads/tmp'
+subjects_dir='/Users/senthilp/Downloads/tmp'
+fname_meg = f'{subjects_dir}/{subject}_ses-rest_task-rest.fif'
+fwd_fname = f'{subjects_dir}/{subject}-fwd.fif.gz'
 
-compute_bem(subject, subjects_dir)
-compute_scalp_surfaces(subject, subjects_dir)
-coregistration(subject, subjects_dir)
+# compute_bem(subject, subjects_dir)
+# compute_scalp_surfaces(subject, subjects_dir)
+# coregistration(subject, subjects_dir)
 
 # The transformation file obtained by coregistration
-trans = f'/home/senthil/Downloads/tmp/{subject}-trans.fif'
+trans = f'{subjects_dir}/{subject}-trans.fif'
 info = mne.io.read_info(fname_meg)
 
-plot_registration(info, trans, subject, subjects_dir)
-src = compute_SS(subject, subjects_dir)
-view_SS_brain(subject, subjects_dir, src)
-fwd = forward_model(subject, subjects_dir, fname_meg, trans, src)
+# plot_registration(info, trans, subject, subjects_dir)
+# src = compute_SS(subject, subjects_dir)
+# view_SS_brain(subject, subjects_dir, src)
+# forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
+fwd = mne.read_forward_solution(fwd_fname)
 sensitivty_plot(subject, subjects_dir, fwd)
