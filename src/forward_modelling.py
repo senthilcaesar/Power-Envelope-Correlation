@@ -85,6 +85,7 @@ def forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname):
     mne.write_forward_solution(fwd_fname, fwd, overwrite=True, verbose=None)
     leadfield = fwd['sol']['data']
     print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
+    np.save(f'{subjects_dir}/GainMatrix.npy', leadfield)
 
 
 def sensitivty_plot(subject, subjects_dir, fwd):
@@ -167,11 +168,11 @@ info = mne.io.read_info(fname_meg)
 # compute_SourceSpace(subject, subjects_dir, src_fname, plot=Falseafari)
 src = mne.read_source_spaces(src_fname)
 # view_SS_brain(subject, subjects_dir, src)
-# forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
-fwd = mne.read_forward_solution(fwd_fname)
+forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
+# fwd = mne.read_forward_solution(fwd_fname)
 #sensitivty_plot(subject, subjects_dir, fwd)
 
-raw = mne.io.read_raw_fif(fname_meg, verbose='error')
+# raw = mne.io.read_raw_fif(fname_meg, verbose='error')
 # projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2)
 # projs_eog, _ = compute_proj_eog(raw, n_grad=1, n_mag=2)
 # raw.info['projs'] += projs_ecg
@@ -179,25 +180,25 @@ raw = mne.io.read_raw_fif(fname_meg, verbose='error')
 # raw.apply_proj()
 # cov_arr = mne.compute_raw_covariance(raw)
 # cov_arr.save(cov_fname)
-cov = mne.read_cov(cov_fname)
-events = mne.find_events(raw, stim_channel=['STI201','STI101','STI003'], 
-                        uint_cast=True, initial_event=True, verbose=False)
-epochs = mne.Epochs(raw, events=events,
-                    baseline=None, preload=True, event_repeated='merge')
-inv = make_inverse_operator(epochs.info, fwd, cov)
+# cov = mne.read_cov(cov_fname)
+# events = mne.find_events(raw, stim_channel=['STI201','STI101','STI003'], 
+#                         uint_cast=True, initial_event=True, verbose=False)
+# epochs = mne.Epochs(raw, events=events,
+#                     baseline=None, preload=True, event_repeated='merge')
+# inv = make_inverse_operator(epochs.info, fwd, cov)
 
-labels = mne.read_labels_from_annot(subject, 'aparc',
-                                    subjects_dir=subjects_dir)
-epochs.apply_hilbert()  # faster to apply in sensor space
-stcs = apply_inverse_epochs(epochs, inv, lambda2=1. / 9., pick_ori='normal',
-                            return_generator=True)
-label_ts = mne.extract_label_time_course(
-    stcs, labels, inv['src'], return_generator=True)
-corr = envelope_correlation(label_ts, verbose=True)
+# labels = mne.read_labels_from_annot(subject, 'aparc',
+#                                     subjects_dir=subjects_dir)
+# epochs.apply_hilbert()  # faster to apply in sensor space
+# stcs = apply_inverse_epochs(epochs, inv, lambda2=1. / 9., pick_ori='normal',
+#                             return_generator=True)
+# label_ts = mne.extract_label_time_course(
+#     stcs, labels, inv['src'], return_generator=True)
+# corr = envelope_correlation(label_ts, verbose=True)
 
 # let's plot this matrix
 # fig, ax = plt.subplots(figsize=(4, 4))
 # ax.imshow(corr, cmap='viridis', clim=np.percentile(corr, [5, 95]))
 # fig.tight_layout()
 # plt.show()
-view_source_origin(corr, labels, inv, subjects_dir)
+# view_source_origin(corr, labels, inv, subjects_dir)
