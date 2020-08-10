@@ -65,15 +65,15 @@ print(events)
 # plot_event(events)
 
 cov_fname = f'{subjects_dir}/{subject}-cov.fif.gz'
-projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
-projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
-projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
-raw.info['projs'] += projs_ecg
-raw.info['projs'] += projs_eog1
-raw.info['projs'] += projs_eog2
-raw.apply_proj()
-cov = mne.compute_raw_covariance(raw)
-mne.write_cov(cov_fname, cov)
-cov = mne.read_cov(cov_fname)
-cov.plot(raw.info, proj=True, exclude='bads', show_svd=False)
+# projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
+# projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
+# projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
+# raw.info['projs'] += projs_ecg
+# raw.info['projs'] += projs_eog1
+# raw.info['projs'] += projs_eog2
+# raw.apply_proj()
+# cov = mne.compute_raw_covariance(raw)
+# mne.write_cov(cov_fname, cov)
+#cov = mne.read_cov(cov_fname)
+#cov.plot(raw.info, proj=True, exclude='bads', show_svd=False)
 
