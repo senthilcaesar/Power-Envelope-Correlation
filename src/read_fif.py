@@ -56,12 +56,12 @@ fname = f'{subjects_dir}/{subject}'
 print(fname)
 raw = mne.io.read_raw_fif(fname, verbose='error')
 general_info(raw)
-# raw.plot(block=True)
-events = mne.find_events(raw, stim_channel=['STI201','STI101','STI003'], uint_cast=True, initial_event=True, verbose=False)
-print(f"Shape of STIM events numpy array {np.shape(events)}")
-print("Event array = (Index of event, Length of the event, Event type)")
-print(f"STIM Event IDs: {np.unique(events[:,2])}\n")
-print(events)
+raw.plot(block=True)
+# events = mne.find_events(raw, stim_channel=['STI201','STI101','STI003'], uint_cast=True, initial_event=True, verbose=False)
+# print(f"Shape of STIM events numpy array {np.shape(events)}")
+# print("Event array = (Index of event, Length of the event, Event type)")
+# print(f"STIM Event IDs: {np.unique(events[:,2])}\n")
+# print(events)
 # plot_event(events)
 
 cov_fname = f'{subjects_dir}/{subject}-cov.fif.gz'
