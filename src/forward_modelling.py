@@ -131,12 +131,10 @@ def view_source_origin(corr, labels, inv, subjects_dir):
     stc = mne.labels_to_stc(labels, degree)
     stc = stc.in_label(mne.Label(inv['src'][0]['vertno'], hemi='lh') +
                     mne.Label(inv['src'][1]['vertno'], hemi='rh'))
-    brain = stc.plot(
-        clim=dict(kind='percent', lims=[75, 85, 95]), colormap='gnuplot',
+    brain = stc.plot(colormap='gnuplot',
         subjects_dir=subjects_dir, views='dorsal', hemi='both',
         smoothing_steps=25, time_label='Beta band')
     mlab.show()
-
 
 # cases_meg = '/home/senthil/caesar/camcan/cc700/meg/pipeline/release004/BIDS_20190411/meg_rest_raw/cases.txt'
 # cases_T1 = '/home/senthil/caesar/camcan/cc700/mri/pipeline/release004/BIDS_20190411/anat/cases.txt'
@@ -173,7 +171,7 @@ forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
 fwd = mne.read_forward_solution(fwd_fname)
 #sensitivty_plot(subject, subjects_dir, fwd)
 
-raw = mne.io.read_raw_fif(fname_meg, verbose='error')
+raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
 projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
 projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
 projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
@@ -184,13 +182,21 @@ raw.apply_proj()
 cov = mne.compute_raw_covariance(raw)
 mne.write_cov(cov_fname, cov)
 cov = mne.read_cov(cov_fname)
+<<<<<<< HEAD
 #cov.plot(raw.info, proj=True, exclude='bads', show_svd=False)
+||||||| merged common ancestors
+cov.plot(raw.info, proj=True, exclude='bads', show_svd=False)
+=======
+#cov.plot(raw.info, proj=True, exclude='bads', show_svd=False)
+
+raw.filter(14, 30)
+>>>>>>> 1a30f6ef6a196d5b7afef31fc88803d042232448
 events = mne.make_fixed_length_events(raw, duration=5.)
 epochs = mne.Epochs(raw, events=events, tmin=0, tmax=5.,
                     baseline=None, preload=True)
 inv = make_inverse_operator(epochs.info, fwd, cov)
 
-labels = mne.read_labels_from_annot(subject, 'aparc',
+labels = mne.read_labels_from_annot(subject, 'aparc.a2009s',
                                     subjects_dir=subjects_dir)
 epochs.apply_hilbert()  # faster to apply in sensor space
 stcs = apply_inverse_epochs(epochs, inv, lambda2=1. / 9., pick_ori='normal',
@@ -200,11 +206,22 @@ stcs = apply_inverse_epochs(epochs, inv, lambda2=1. / 9., pick_ori='normal',
 #print(f'Source Estimate: {stcs}')
 #np.save('/home/senthil/Downloads/tmp/stc.npy', stcs.data)
 
+<<<<<<< HEAD
 #label_ts = mne.extract_label_time_course(
 #    stcs, labels, inv['src'], return_generator=True)
 #corr = envelope_correlation(label_ts, verbose=True)
+||||||| merged common ancestors
+label_ts = mne.extract_label_time_course(
+    stcs, labels, inv['src'], return_generator=True)
+corr = envelope_correlation(label_ts, verbose=True)
+=======
+label_ts = mne.extract_label_time_course(
+    stcs, labels, inv['src'], return_generator=True)
+corr = envelope_correlation(label_ts, verbose=True, orthogonalize=False)
+>>>>>>> 1a30f6ef6a196d5b7afef31fc88803d042232448
 
 # let's plot this matrix
+<<<<<<< HEAD
 #fig, ax = plt.subplots(figsize=(4, 4))
 #ax.imshow(corr, cmap='viridis', clim=np.percentile(corr, [5, 95]))
 #fig.tight_layout()
@@ -217,3 +234,27 @@ F = open(datafile, 'wb')
 pickle.dump(stcs, F)
 F.close()
 
+||||||| merged common ancestors
+fig, ax = plt.subplots(figsize=(4, 4))
+ax.imshow(corr, cmap='viridis', clim=np.percentile(corr, [5, 95]))
+fig.tight_layout()
+plt.show()
+view_source_origin(corr, labels, inv, subjects_dir)
+=======
+from nilearn import datasets
+atlas = datasets.fetch_atlas_destrieux_2009()
+fig = plt.figure(figsize=(11,10))
+plt.imshow(corr, interpolation='None', cmap='RdYlBu_r')
+plt.yticks(range(len(atlas.labels)), atlas.labels[1:])
+plt.xticks(range(len(atlas.labels)), atlas.labels[1:], rotation=90)
+plt.title('Parcellation correlation matrix')
+plt.colorbar()
+plt.show()
+
+# fig, ax = plt.subplots(figsize=(4, 4))
+# im = ax.imshow(corr, cmap='viridis', clim=np.percentile(corr, [5, 95]))
+# fig.tight_layout()
+# fig.colorbar(im)
+# plt.show()
+view_source_origin(corr, labels, inv, subjects_dir)
+>>>>>>> 1a30f6ef6a196d5b7afef31fc88803d042232448
