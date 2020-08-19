@@ -202,12 +202,22 @@ print(f'Source Estimate: {stcs}')
 
 label_ts = mne.extract_label_time_course(
     stcs, labels, inv['src'], return_generator=True)
-corr = envelope_correlation(label_ts, verbose=True)
+corr = envelope_correlation(label_ts, verbose=True, orthogonalize=False)
 
 # let's plot this matrix
-fig, ax = plt.subplots(figsize=(4, 4))
-im = ax.imshow(corr, cmap='viridis', clim=np.percentile(corr, [5, 95]))
-fig.tight_layout()
-fig.colorbar(im)
+from nilearn import datasets
+atlas = datasets.fetch_atlas_destrieux_2009()
+fig = plt.figure(figsize=(11,10))
+plt.imshow(corr, interpolation='None', cmap='RdYlBu_r')
+plt.yticks(range(len(atlas.labels)), atlas.labels[1:])
+plt.xticks(range(len(atlas.labels)), atlas.labels[1:], rotation=90)
+plt.title('Parcellation correlation matrix')
+plt.colorbar()
 plt.show()
+
+# fig, ax = plt.subplots(figsize=(4, 4))
+# im = ax.imshow(corr, cmap='viridis', clim=np.percentile(corr, [5, 95]))
+# fig.tight_layout()
+# fig.colorbar(im)
+# plt.show()
 view_source_origin(corr, labels, inv, subjects_dir)
