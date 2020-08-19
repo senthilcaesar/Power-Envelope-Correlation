@@ -150,7 +150,7 @@ def view_source_origin(corr, labels, inv, subjects_dir):
 # print(fname_meg, fname_T1)
 
 subject='sub-CC221373'
-subjects_dir='/Users/senthilp/Downloads/tmp'
+subjects_dir='/home/senthil/Downloads/tmp'
 fname_meg = f'{subjects_dir}/{subject}_ses-rest_task-rest.fif'
 fwd_fname = f'{subjects_dir}/{subject}-fwd.fif.gz'
 src_fname = f'{subjects_dir}/{subject}-src.fif.gz'
@@ -166,10 +166,10 @@ trans = f'{subjects_dir}/{subject}-trans.fif'
 info = mne.io.read_info(fname_meg)
 
 # plot_registration(info, trans, subject, subjects_dir)
-# compute_SourceSpace(subject, subjects_dir, src_fname, plot=Falseafari)
+compute_SourceSpace(subject, subjects_dir, src_fname, plot=False)
 src = mne.read_source_spaces(src_fname)
 # view_SS_brain(subject, subjects_dir, src)
-# forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
+forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
 fwd = mne.read_forward_solution(fwd_fname)
 #sensitivty_plot(subject, subjects_dir, fwd)
 
@@ -184,7 +184,7 @@ raw.apply_proj()
 cov = mne.compute_raw_covariance(raw)
 mne.write_cov(cov_fname, cov)
 cov = mne.read_cov(cov_fname)
-cov.plot(raw.info, proj=True, exclude='bads', show_svd=False)
+#cov.plot(raw.info, proj=True, exclude='bads', show_svd=False)
 events = mne.make_fixed_length_events(raw, duration=5.)
 epochs = mne.Epochs(raw, events=events, tmin=0, tmax=5.,
                     baseline=None, preload=True)
@@ -194,19 +194,26 @@ labels = mne.read_labels_from_annot(subject, 'aparc',
                                     subjects_dir=subjects_dir)
 epochs.apply_hilbert()  # faster to apply in sensor space
 stcs = apply_inverse_epochs(epochs, inv, lambda2=1. / 9., pick_ori='normal',
-                            return_generator=True)
-#stc.save(stcs_fname)
+                            return_generator=False)
+#stcs.save(stcs_fname)
 #stcs = mne.read_source_estimate(stcs_fname, subject=subject)
-print(f'Source Estimate: {stcs}')
-#np.save('/Users/senthilp/Desktop/stc.npy', stcs.data)
+#print(f'Source Estimate: {stcs}')
+#np.save('/home/senthil/Downloads/tmp/stc.npy', stcs.data)
 
-label_ts = mne.extract_label_time_course(
-    stcs, labels, inv['src'], return_generator=True)
-corr = envelope_correlation(label_ts, verbose=True)
+#label_ts = mne.extract_label_time_course(
+#    stcs, labels, inv['src'], return_generator=True)
+#corr = envelope_correlation(label_ts, verbose=True)
 
 # let's plot this matrix
-fig, ax = plt.subplots(figsize=(4, 4))
-ax.imshow(corr, cmap='viridis', clim=np.percentile(corr, [5, 95]))
-fig.tight_layout()
-plt.show()
-view_source_origin(corr, labels, inv, subjects_dir)
+#fig, ax = plt.subplots(figsize=(4, 4))
+#ax.imshow(corr, cmap='viridis', clim=np.percentile(corr, [5, 95]))
+#fig.tight_layout()
+#plt.show()
+#view_source_origin(corr, labels, inv, subjects_dir)
+
+import pickle
+datafile = f'/home/senthil/Downloads/tmp/stc.pkl'
+F = open(datafile, 'wb')
+pickle.dump(stcs, F)
+F.close()
+
