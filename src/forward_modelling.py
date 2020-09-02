@@ -1,6 +1,8 @@
+from re import VERBOSE
 import mne
 import numpy as np
 import os
+import os.path as op
 import subprocess
 import numpy as np
 from surfer import Brain
@@ -9,6 +11,7 @@ from mayavi import mlab
 from mne.viz import plot_alignment, set_3d_view
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.connectivity import envelope_correlation
+from mne.beamformer import make_lcmv, apply_lcmv_epochs
 from mne.minimum_norm import make_inverse_operator, apply_inverse_epochs
 import matplotlib.pyplot as plt
 os.environ['ETS_TOOLKIT'] = 'qt4'
@@ -63,13 +66,25 @@ def view_SS_brain(subject, subjects_dir, src):
     mlab.show()
 
 
-def compute_SourceSpace(subject, subjects_dir, src_fname, plot=True):
-    src = mne.setup_source_space(subject, spacing='ico5', add_dist=None,
+def compute_SourceSpace(subject, subjects_dir, src_fname, plot=True, ss='surface'):
+
+    src = None
+    if ss == 'surface':
+        src = mne.setup_source_space(subject, spacing='ico5', add_dist=None,
                                 subjects_dir=subjects_dir)
-    src.save(src_fname, overwrite=True)
-    if plot:
-        mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
+        src.save(src_fname, overwrite=True)
+        if plot:
+            mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
                         src=src, orientation='coronal')
+    elif ss == 'volume':
+        surface = op.join(subjects_dir, subject, 'bem', 'inner_skull.surf')
+        src = mne.setup_volume_source_space(subject, pos=2.5, subjects_dir=subjects_dir,
+                                        surface=surface, verbose=True)
+        src.save(src_fname, overwrite=True)
+        if plot:
+            mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
+                 brain_surfaces='white', src=src, orientation='coronal')
+
     return src
 
 
@@ -80,7 +95,7 @@ def forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname):
                             subjects_dir=subjects_dir)
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(fname_meg, trans=trans, src=src, bem=bem,
-                                    meg=True, eeg=False, mindist=5.0, n_jobs=2)
+                                    meg=True, eeg=False, mindist=5.0, n_jobs=16)
     print(fwd)
     mne.write_forward_solution(fwd_fname, fwd, overwrite=True, verbose=None)
     leadfield = fwd['sol']['data']
@@ -149,24 +164,25 @@ def view_source_origin(corr, labels, inv, subjects_dir):
 
 subject='sub-CC221373'
 subjects_dir='/home/senthil/Downloads/tmp'
-fname_meg = f'{subjects_dir}/{subject}_ses-rest_task-rest.fif'
-fwd_fname = f'{subjects_dir}/{subject}-fwd.fif.gz'
-src_fname = f'{subjects_dir}/{subject}-src.fif.gz'
-cov_fname = f'{subjects_dir}/{subject}-cov.fif.gz'
-stcs_fname = f'{subjects_dir}/{subject}-fixed_ori'
+space = 'volume'
+fname_meg = f'{subjects_dir}/{subject}/mne_files/{subject}_ses-rest_task-rest.fif'
+fwd_fname = f'{subjects_dir}/{subject}/mne_files/{subject}-fwd.fif.gz'
+src_fname = f'{subjects_dir}/{subject}/mne_files/{subject}-src.fif.gz'
+cov_fname = f'{subjects_dir}/{subject}/mne_files/{subject}-cov.fif.gz'
+stcs_fname = f'{subjects_dir}/{subject}/mne_files/{subject}-fixed_ori'
 
 # compute_bem(subject, subjects_dir)
 # compute_scalp_surfaces(subject, subjects_dir)
 # coregistration(subject, subjects_dir)
 
 # The transformation file obtained by coregistration
-trans = f'{subjects_dir}/{subject}-trans.fif'
+trans = f'{subjects_dir}/{subject}/mne_files/{subject}-trans.fif'
 info = mne.io.read_info(fname_meg)
 
 # plot_registration(info, trans, subject, subjects_dir)
-compute_SourceSpace(subject, subjects_dir, src_fname, plot=False)
+compute_SourceSpace(subject, subjects_dir, src_fname, plot=False, ss=space)
 src = mne.read_source_spaces(src_fname)
-#view_SS_brain(subject, subjects_dir, src)
+# view_SS_brain(subject, subjects_dir, src)
 forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
 fwd = mne.read_forward_solution(fwd_fname)
 #sensitivty_plot(subject, subjects_dir, fwd)
@@ -188,23 +204,34 @@ raw.filter(14, 30)
 events = mne.make_fixed_length_events(raw, duration=5.)
 epochs = mne.Epochs(raw, events=events, tmin=0, tmax=5.,
                      baseline=None, preload=True)
-inv = make_inverse_operator(epochs.info, fwd, cov)
+data_cov = mne.compute_covariance(epochs)
 
-# labels = mne.read_labels_from_annot(subject, 'aparc.a2009s',
-#                                     subjects_dir=subjects_dir)
-epochs.apply_hilbert()  # faster to apply in sensor space
-stcs = apply_inverse_epochs(epochs, inv, lambda2=1. / 9., pick_ori='normal',
-                             return_generator=False)
-#stcs = mne.minimum_norm.apply_inverse_raw(raw, inv, lambda2=1. / 9., pick_ori='normal')
-#stcs.save(stcs_fname)
-#stcs = mne.read_source_estimate(stcs_fname, subject=subject)
-#print(f'Source Estimate: {stcs}')
-#np.save('/home/senthil/Downloads/tmp/stc.npy', stcs.data)
+if space == 'volume':
+    filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
+                    pick_ori='max-power', weight_norm='nai')
+    epochs.apply_hilbert()
+    stcs = apply_lcmv_epochs(epochs, filters, return_generator=True)
+    corr = envelope_correlation(stcs, verbose=True) #, orthogonalize=False)
+    np.save(f'{subjects_dir}/corr_ortho_true.npy', corr)
 
-# label_ts = mne.extract_label_time_course(
-#     stcs, labels, inv['src'], return_generator=True)
-corr = envelope_correlation(stcs, verbose=True) #, orthogonalize=False)
-np.save(f'{subjects_dir}/corr_ortho_true.npy', corr)
+# elif space == 'surface':
+#     inv = make_inverse_operator(epochs.info, fwd, cov, loose=1.0)
+
+#     # labels = mne.read_labels_from_annot(subject, 'aparc.a2009s',
+#     #                                     subjects_dir=subjects_dir)
+#     epochs.apply_hilbert()  # faster to apply in sensor space
+#     stcs = apply_inverse_epochs(epochs, inv, lambda2=1. / 9., pick_ori='normal',
+#                                 return_generator=False)
+#     stcs = mne.minimum_norm.apply_inverse_epochs(epochs, inv, lambda2=1. / 9., pick_ori='normal')
+#     #stcs.save(stcs_fname)
+#     #stcs = mne.read_source_estimate(stcs_fname, subject=subject)
+#     # print(f'Source Estimate: {stcs}')
+#     # np.save('/home/senthil/Downloads/tmp/stc.npy', stcs.data)
+
+#     # label_ts = mne.extract_label_time_course(
+#     #     stcs, labels, inv['src'], return_generator=True)
+#     corr = envelope_correlation(stcs, verbose=True, orthogonalize=False)
+#     np.save(f'{subjects_dir}/corr_ortho_false.npy', corr)
 
 # let's plot this matrix
 # from nilearn import datasets
