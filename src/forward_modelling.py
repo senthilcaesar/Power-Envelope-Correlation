@@ -78,7 +78,7 @@ def compute_SourceSpace(subject, subjects_dir, src_fname, plot=True, ss='surface
                         src=src, orientation='coronal')
     elif ss == 'volume':
         surface = op.join(subjects_dir, subject, 'bem', 'inner_skull.surf')
-        src = mne.setup_volume_source_space(subject, pos=2.5, subjects_dir=subjects_dir,
+        src = mne.setup_volume_source_space(subject, pos=3.0, subjects_dir=subjects_dir,
                                         surface=surface, verbose=True)
         src.save(src_fname, overwrite=True)
         if plot:
@@ -206,13 +206,15 @@ epochs = mne.Epochs(raw, events=events, tmin=0, tmax=5.,
                      baseline=None, preload=True)
 data_cov = mne.compute_covariance(epochs)
 
+flag = 'true'
 if space == 'volume':
     filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
                     pick_ori='max-power', weight_norm='nai')
     epochs.apply_hilbert()
     stcs = apply_lcmv_epochs(epochs, filters, return_generator=True)
+    print("Computing PEC...........................")
     corr = envelope_correlation(stcs, verbose=True) #, orthogonalize=False)
-    np.save(f'{subjects_dir}/corr_ortho_true.npy', corr)
+    np.save(f'{subjects_dir}/corr_ortho_{flag}.npy', corr)
 
 # elif space == 'surface':
 #     inv = make_inverse_operator(epochs.info, fwd, cov, loose=1.0)
