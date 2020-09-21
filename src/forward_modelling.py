@@ -1,19 +1,30 @@
+from pickle import NONE
 from re import VERBOSE
 import mne
+from mne.io import proj
 import numpy as np
 import os
 import os.path as op
 import subprocess
-import numpy as np
+from mne.transforms import apply_trans
+import nibabel as nib
+from pathlib import Path
+from numpy.core.shape_base import block
 from surfer import Brain
 from IPython.display import Image
 from mayavi import mlab
+import subprocess
+import pickle
+import datetime
+import pathlib
+from mne.time_frequency import tfr_morlet
 from mne.viz import plot_alignment, set_3d_view
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.connectivity import envelope_correlation
 from mne.beamformer import make_lcmv, apply_lcmv_epochs
 from mne.minimum_norm import make_inverse_operator, apply_inverse_epochs
 import matplotlib.pyplot as plt
+from surfer.utils import verbose
 os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
 
@@ -33,7 +44,7 @@ def compute_scalp_surfaces(subject, subjects_dir):
     subprocess.check_output(bashCommand, shell=True)
 
 
-def coregistration(subject, subjects_dir):
+def coregistration(subject, subjects_dir, trans):
     mne.gui.coregistration(subject=subject, subjects_dir=subjects_dir)
 
 
@@ -42,8 +53,8 @@ def plot_registration(info, trans, subject, subjects_dir):
                         meg=True, subjects_dir=subjects_dir,
                         coord_frame='head')
     set_3d_view(figure=fig, azimuth=135, elevation=80)
-    mlab.savefig('/Users/senthilp/Desktop/coreg.jpg')
-    Image(filename='/Users/senthilp/Desktop/coreg.jpg', width=500)
+    mlab.savefig('/home/senthil/Desktop/coreg.jpg')
+    Image(filename='/home/senthil/Desktop/coreg.jpg', width=500)
     mlab.show()
 
 
@@ -66,7 +77,8 @@ def view_SS_brain(subject, subjects_dir, src):
     mlab.show()
 
 
-def compute_SourceSpace(subject, subjects_dir, src_fname, plot=True, ss='surface'):
+def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='surface', 
+                        volume_spacing=10):
 
     src = None
     if ss == 'surface':
@@ -78,29 +90,35 @@ def compute_SourceSpace(subject, subjects_dir, src_fname, plot=True, ss='surface
                         src=src, orientation='coronal')
     elif ss == 'volume':
         surface = op.join(subjects_dir, subject, 'bem', 'inner_skull.surf')
-        src = mne.setup_volume_source_space(subject, pos=3.0, subjects_dir=subjects_dir,
-                                        surface=surface, verbose=True)
+        src = mne.setup_volume_source_space(subject, subjects_dir=subjects_dir,
+                                        pos=volume_spacing, surface=surface, verbose=True)
         src.save(src_fname, overwrite=True)
         if plot:
-            mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', src=src, orientation='coronal')
+            fig = mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
+                 brain_surfaces='white', src=src, orientation='coronal', show=True)
+            plt.close()
+            old_file_name = f'{subjects_dir}/{subject}/mne_files/coords.pkl'
+            bashCommand = f'mv {old_file_name} {source_voxel_coords}'
+            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
 
     return src
 
 
 def forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname):
-    conductivity = (0.3, 0.006, 0.3)  # for three layers
+    #conductivity = (0.3, 0.006, 0.3)  # for three layers
+    conductivity = (0.3,) # for single layer
     model = mne.make_bem_model(subject=subject, ico=4,
                             conductivity=conductivity,
                             subjects_dir=subjects_dir)
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(fname_meg, trans=trans, src=src, bem=bem,
                                     meg=True, eeg=False, mindist=5.0, n_jobs=16)
-    print(fwd)
+    # print(fwd)
     mne.write_forward_solution(fwd_fname, fwd, overwrite=True, verbose=None)
     leadfield = fwd['sol']['data']
     print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
-    np.save(f'{subjects_dir}/GainMatrix.npy', leadfield)
+    # np.save(f'{subjects_dir}/{subject}/mne_files/{subject}_GainMatrix.npy', leadfield)
 
 
 def sensitivty_plot(subject, subjects_dir, fwd):
@@ -151,70 +169,180 @@ def view_source_origin(corr, labels, inv, subjects_dir):
         smoothing_steps=25, time_label='Beta band')
     mlab.show()
 
-# cases_meg = '/home/senthil/caesar/camcan/cc700/meg/pipeline/release004/BIDS_20190411/meg_rest_raw/cases.txt'
-# cases_T1 = '/home/senthil/caesar/camcan/cc700/mri/pipeline/release004/BIDS_20190411/anat/cases.txt'
-# with open(cases_meg) as f:
-#     case_meg_list = f.read().splitlines()
-# with open(cases_T1) as f:
-#     cases_T1_list = f.read().splitlines()
 
-# fname_meg = case_meg_list[120]
-# fname_T1 = cases_T1_list[120]
-# print(fname_meg, fname_T1)
+def save_source_estimates(stcs, subjects_dir, subject, volume_spacing):
 
-subject='sub-CC221373'
-subjects_dir='/home/senthil/Downloads/tmp'
-space = 'volume'
-fname_meg = f'{subjects_dir}/{subject}/mne_files/{subject}_ses-rest_task-rest.fif'
-fwd_fname = f'{subjects_dir}/{subject}/mne_files/{subject}-fwd.fif.gz'
-src_fname = f'{subjects_dir}/{subject}/mne_files/{subject}-src.fif.gz'
-cov_fname = f'{subjects_dir}/{subject}/mne_files/{subject}-cov.fif.gz'
-stcs_fname = f'{subjects_dir}/{subject}/mne_files/{subject}-fixed_ori'
+    for idx, se in enumerate(stcs):
+        stcs_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{volume_spacing}-stcs_epoch{idx}'
+        print(f'Saving epoch {idx} source estimate to file {stcs_fname}....')
+        se.save(stcs_fname, ftype='h5')
 
-# compute_bem(subject, subjects_dir)
-# compute_scalp_surfaces(subject, subjects_dir)
-# coregistration(subject, subjects_dir)
 
-# The transformation file obtained by coregistration
-trans = f'{subjects_dir}/{subject}/mne_files/{subject}-trans.fif'
-info = mne.io.read_info(fname_meg)
+def plot_psd(epochs):
+    # Plot power spectral density
+    # Exploring frequency content of our epochs
+    epochs.plot_psd(average=True, spatial_colors=False, fmin=0, fmax=50)
+    epochs.plot_psd_topomap(normalize=True)
 
-# plot_registration(info, trans, subject, subjects_dir)
-compute_SourceSpace(subject, subjects_dir, src_fname, plot=False, ss=space)
-src = mne.read_source_spaces(src_fname)
-# view_SS_brain(subject, subjects_dir, src)
-forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
-fwd = mne.read_forward_solution(fwd_fname)
-#sensitivty_plot(subject, subjects_dir, fwd)
 
-raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
-projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
-projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
-projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
-raw.info['projs'] += projs_ecg
-raw.info['projs'] += projs_eog1
-raw.info['projs'] += projs_eog2
-raw.apply_proj()
-cov = mne.compute_raw_covariance(raw)
-mne.write_cov(cov_fname, cov)
-cov = mne.read_cov(cov_fname)
-#cov.plot(raw.info, proj=True, exclude='bads', show_svd=False)
-raw.crop(tmax=10)
-raw.filter(14, 30)
-events = mne.make_fixed_length_events(raw, duration=5.)
-epochs = mne.Epochs(raw, events=events, tmin=0, tmax=5.,
-                     baseline=None, preload=True)
-data_cov = mne.compute_covariance(epochs)
+def MNI_to_RASandVoxel(subject, subjects_dir, t1, mni_coords):
+    # MNI to Native scanner RAS
+    ras_mni_t = mne.transforms.read_ras_mni_t(subject, subjects_dir)
+    ras_mni_t = ras_mni_t['trans']
+    mni_ras_t = np.linalg.inv(ras_mni_t)
+    ras_coords = apply_trans(mni_ras_t, mni_coords)
+    
+    # Voxel to RAS to MNI
+    vox_ras_mni_t = np.dot(ras_mni_t, t1.affine)
+    mni_ras_vox_t = np.linalg.inv(vox_ras_mni_t)
+    vox_coords = apply_trans(mni_ras_vox_t, mni_coords)
+    vox_coords = np.round(vox_coords)
+    return(ras_coords, vox_coords)
 
-flag = 'true'
-if space == 'volume':
-    filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
-                    pick_ori='max-power', weight_norm='nai')
-    epochs.apply_hilbert()
-    stcs = apply_lcmv_epochs(epochs, filters, return_generator=True)
-    print("Computing PEC...........................")
-    corr = envelope_correlation(stcs, verbose=True) #, orthogonalize=False)
-    np.save(f'{subjects_dir}/corr_ortho_{flag}.npy', corr)
+
+def source_to_MNI(subject, subjects_dir, t1, sources):
+     # MNI to Native scanner RAS
+    ras_mni_t = mne.transforms.read_ras_mni_t(subject, subjects_dir)
+    ras_mni_t = ras_mni_t['trans']
+    
+    # Voxel to RAS to MNI
+    vox_ras_mni_t = np.dot(ras_mni_t, t1.affine)
+    sources_mni = apply_trans(vox_ras_mni_t, sources)
+    return sources_mni
+
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/sub_87.txt'
+subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+with open(cases) as f:
+     case_list = f.read().splitlines()
+
+for case in case_list:
+    subject = case
+    space = 'volume'
+    volume_spacing = 3
+    corr_flag = 'true'
+    DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
+    bem_check = f'{subjects_dir}/{subject}/bem/'
+    eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
+    eye_proj2 = f'{DATA_DIR}/{subject}_eyes2-proj.fif.gz'
+    fname_meg = f'{DATA_DIR}/{subject}_ses-rest_task-rest.fif'
+    t1_fname = os.path.join(subjects_dir, subject, 'mri', 'T1.mgz')
+    heartbeat_proj = f'{DATA_DIR}/{subject}_heartbeat-proj.fif.gz'
+    fwd_fname = f'{DATA_DIR}/{subject}-fwd_{volume_spacing}.fif.gz'
+    src_fname = f'{DATA_DIR}/{subject}-src_{volume_spacing}.fif.gz'
+    cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
+    raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
+    source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
+    corr_data_file = f'{DATA_DIR}/{subject}_corr_ortho_{corr_flag}_{volume_spacing}.npy'
+    trans = f'/home/senthil/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
+
+    #compute_bem(subject, subjects_dir)
+    #compute_scalp_surfaces(subject, subjects_dir)
+    file_trans = pathlib.Path(trans)
+    isdir_bem = pathlib.Path(bem_check)
+    # if not isdir_bem.exists():
+    #     print(f"bem directory doesn't exists for subject {subject}...")
+    #     break
+
+    if not file_trans.exists():
+        print (f'{trans} File doesnt exist...')
+        coregistration(subject, subjects_dir, trans)
+
+    info = mne.io.read_info(fname_meg)
+    # plot_registration(info, trans, subject, subjects_dir)
+
+    compute_ss = False
+    if compute_ss:
+        compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss=space, 
+                            volume_spacing=volume_spacing)
+
+    src = mne.read_source_spaces(src_fname)
+    # view_SS_brain(subject, subjects_dir, src)
+    compute_fm = False
+    if compute_fm:
+        forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
+    fwd = mne.read_forward_solution(fwd_fname)
+    # sensitivty_plot(subject, subjects_dir, fwd)
+
+    raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
+    #raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)
+    compute_proj = False
+    if compute_proj:
+        projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
+        projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
+        projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
+        print(subject)
+        if projs_ecg is not None:
+            mne.write_proj(heartbeat_proj, projs_ecg) # Saving projectors
+            raw.info['projs'] += projs_ecg
+        if projs_eog1 is not None:
+            mne.write_proj(eye_proj1, projs_eog1)
+            raw.info['projs'] += projs_eog1
+        if projs_eog2 is not None:
+            mne.write_proj(eye_proj2, projs_eog2)
+            raw.info['projs'] += projs_eog2
+        raw.apply_proj()
+        raw.save(raw_proj, proj=True, overwrite=True)
+    raw_proj_applied = mne.io.read_raw_fif(raw_proj, verbose='error', preload=True)
+
+    compute_cov = False
+    if compute_cov:
+        cov = mne.compute_raw_covariance(raw_proj_applied) # compute before band-pass of interest
+        mne.write_cov(cov_fname, cov)
+    cov = mne.read_cov(cov_fname) 
+
+    # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
+    # raw_proj_applied.crop(tmax=10)
+    raw_proj_applied.filter(l_freq=14, h_freq=18, n_jobs=16)
+    events = mne.make_fixed_length_events(raw_proj_applied, duration=5.)
+    epochs = mne.Epochs(raw_proj_applied, events=events, tmin=0, tmax=5.,
+                        baseline=None, preload=True)
+    # plot_psd(epochs)
+    data_cov = mne.compute_covariance(epochs)
+    
+    t1 = nib.load(t1_fname)
+    vox_mri_t = t1.header.get_vox2ras_tkr()
+    mri_vox_t = np.linalg.inv(vox_mri_t)
+    sources = []
+    seed = 0
+    for src_ in src:
+        points = src_['rr'][src_['inuse'].astype(bool)]
+        sources.append(apply_trans(mri_vox_t, points * 1e3))
+        sources = np.concatenate(sources, axis=0)
+    sources_vox = np.round(sources)
+    sources_mni = source_to_MNI(subject, subjects_dir, t1, sources_vox)
+    sources_mni = np.round(sources_mni)
+
+    soma_left_MNI = np.array([-42, -26, 54]) # Left somatosensory cortex
+    x_range = [soma_left_MNI[0]+1, soma_left_MNI[0], soma_left_MNI[0]-1]
+    y_range = [soma_left_MNI[1]+1, soma_left_MNI[1], soma_left_MNI[1]-1]
+    z_range = [soma_left_MNI[2]+1, soma_left_MNI[2], soma_left_MNI[2]-1]
+    for i, val in enumerate(sources_mni):
+        if val[0] in x_range and val[1] in y_range and val[2] in z_range:
+            print(f'Left somatosensory cortex seed index {i}, {val}')
+            seed = i
+            break
+
+    if space == 'volume':
+        filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
+                        pick_ori='max-power', weight_norm='nai')
+        epochs.apply_hilbert()
+        stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True)
+        save_stcs = False
+
+        if save_stcs:
+            save_source_estimates(stcs, subjects_dir, subject, volume_spacing)
+
+        start_total_time = datetime.datetime.now()
+        print(f'Computing Power Envelope Correlation ( Orthogonalize = {corr_flag} )....')
+        if corr_flag == 'false':
+            corr = envelope_correlation(stcs, verbose=True, orthogonalize=False, seed=seed)
+        else:
+            corr = envelope_correlation(stcs, verbose=True, seed=seed)
+        np.save(corr_data_file, corr)
+        print(f'Saved correlation data to file {corr_data_file}....')
+        end_processing_time = datetime.datetime.now()
+        total_processing_time = end_processing_time - start_total_time
+        print (f'Time Taken for correlation computation : {round(int(total_processing_time.seconds)/60, 2)} min')
 
 # elif space == 'surface':
 #     inv = make_inverse_operator(epochs.info, fwd, cov, loose=1.0)
