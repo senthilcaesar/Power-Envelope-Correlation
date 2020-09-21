@@ -1,4 +1,3 @@
 # Power-Envelope-Correlation
 
-Large-scale cortical correlation structure of
-spontaneous oscillatory activity
+This module computes the power envelope correlation between orthogonalized signals
