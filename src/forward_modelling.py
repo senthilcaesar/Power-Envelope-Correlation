@@ -248,7 +248,7 @@ ROI_mni = {
 #fname_src_fsaverage = '/home/senthil/Downloads/2932.fif.gz'
 #fname_t1_fsaverage = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/mri/brain.mgz'
 
-start_t = datetime.datetime.now()
+start_t = datetime.now()
 for case in case_list:
     subject = case
     space = 'volume'
@@ -411,22 +411,20 @@ for case in case_list:
             data_vse = list(data_vse)
         else:
             data_vse = stcs
-        
-        data_vse_orth_false = data_vse.copy()
-        data_vse_orth_true = data_vse.copy()
-        del data_vse
 
         #Power Envelope Correlation
         start_total_time = datetime.now()
         print(f'Computing Power Envelope Correlation....')
 
-        corr_false = envelope_correlation(data_vse_orth_false, verbose=True, orthogonalize=False, seed=seed)
-        np.save(corr_data_false_file, corr_false)
-        del data_vse_orth_false
-
-        corr_true = envelope_correlation(data_vse_orth_true, verbose=True, seed=seed)
-        np.save(corr_data_true_file, corr_true)
-        del data_vse_orth_true
+        corr_false = True
+        if corr_false:
+            corr_false = envelope_correlation(data_vse, verbose=True, orthogonalize=False, seed=seed)
+            np.save(corr_data_false_file, corr_false)
+            del data_vse
+        else:
+            corr_true = envelope_correlation(data_vse, verbose=True, seed=seed)
+            np.save(corr_data_true_file, corr_true)
+            del data_vse
 
         time_elapsed_corr = datetime.now() - start_total_time
         print ('Time taken for correlation computation (hh:mm:ss.ms) {}'.format(time_elapsed_corr))
