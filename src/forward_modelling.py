@@ -2,12 +2,16 @@ from pickle import NONE
 from re import VERBOSE
 import mne
 from mne.io import proj
+from mne.utils.docs import stc
 import numpy as np
 import os
+from datetime import datetime 
 import os.path as op
 import subprocess
 from mne.transforms import apply_trans
 import nibabel as nib
+import multiprocessing as mp
+from multiprocessing import Manager
 from pathlib import Path
 from numpy.core.shape_base import block
 from surfer import Brain
@@ -15,7 +19,6 @@ from IPython.display import Image
 from mayavi import mlab
 import subprocess
 import pickle
-import datetime
 import pathlib
 from mne.time_frequency import tfr_morlet
 from mne.viz import plot_alignment, set_3d_view
@@ -202,6 +205,7 @@ def MNI_to_RASandVoxel(subject, subjects_dir, t1, mni_coords):
 
 def source_to_MNI(subject, subjects_dir, t1, sources):
      # MNI to Native scanner RAS
+
     ras_mni_t = mne.transforms.read_ras_mni_t(subject, subjects_dir)
     ras_mni_t = ras_mni_t['trans']
     
@@ -210,16 +214,45 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
     sources_mni = apply_trans(vox_ras_mni_t, sources)
     return sources_mni
 
+
 cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/sub_87.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
+ROI_mni = { 
+    'AC_Left':[-54, -22, 10],
+    'AC_Right':[52, -24, 12],
+    'SSC_Left':[-42, -26, 54],
+    'SSC_Right':[38, -32, 48],
+    'VC_Left':[-20, -86, 18],
+    'VC_Right':[16, -80, 26],
+    'MT+_Left':[-47, -69, -3],
+    'MT+_Right':[54, -63, -8],
+    'MTL_Left':[-20, -40, -10],
+    'MTL_Right':[40, -40, 0],
+    'SMC_Left':[-40, -40, -60],
+    'SMC_Right':[40, -30, 50],
+    'LPC_Left':[-39, -54, 32],
+    'LPC_Right':[46, -45, 39],
+    'DPFC_Left':[-40, 30, 50],
+    'DPFC_Right':[30, 20, 30],
+    'TMPC_Left':[-50, -40, -10],
+    'TMPC_Right':[60, -20, 0],
+    'MPFC_MidBrain':[-3, 39, -2],
+    'SMA_MidBrain':[-2, 1, 51],
+    }
+
+
+#fname_src_fsaverage = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/bem/fsaverage-vol-5-src.fif'
+#fname_src_fsaverage = '/home/senthil/Downloads/2932.fif.gz'
+#fname_t1_fsaverage = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/mri/brain.mgz'
+
+start_t = datetime.datetime.now()
 for case in case_list:
     subject = case
     space = 'volume'
     volume_spacing = 3
-    corr_flag = 'true'
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     bem_check = f'{subjects_dir}/{subject}/bem/'
     eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
@@ -232,7 +265,8 @@ for case in case_list:
     cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
     raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
     source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
-    corr_data_file = f'{DATA_DIR}/{subject}_corr_ortho_{corr_flag}_{volume_spacing}.npy'
+    corr_data_false_file = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_no_morph.npy'
+    corr_data_true_file = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_no_morph.npy'
     trans = f'/home/senthil/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
 
     #compute_bem(subject, subjects_dir)
@@ -264,7 +298,7 @@ for case in case_list:
     # sensitivty_plot(subject, subjects_dir, fwd)
 
     raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
-    #raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)
+    # raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)
     compute_proj = False
     if compute_proj:
         projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
@@ -291,14 +325,24 @@ for case in case_list:
     cov = mne.read_cov(cov_fname) 
 
     # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
-    # raw_proj_applied.crop(tmax=10)
+    # raw_proj_applied.crop(tmax=50)
     raw_proj_applied.filter(l_freq=14, h_freq=18, n_jobs=16)
     events = mne.make_fixed_length_events(raw_proj_applied, duration=5.)
     epochs = mne.Epochs(raw_proj_applied, events=events, tmin=0, tmax=5.,
                         baseline=None, preload=True)
+    # epochs = epochs.resample(5, npad='auto')
     # plot_psd(epochs)
     data_cov = mne.compute_covariance(epochs)
     
+
+    '''
+    Get the seed location from freesurfer fsaverage 'brain.mgz'
+    In order to compute group level statistics, data representations across subjects must be morphed to a common frame, 
+    such that anatomically and functional similar structures are represented at the same spatial location for all subjects equally.
+    All the subject volume source estimates are morphed to FreeSurfer’s ‘fsaverage’ T1 weighted MRI (brain).
+    '''
+    #t1 = nib.load(fname_t1_fsaverage)
+    #src = mne.read_source_spaces(fname_src_fsaverage)
     t1 = nib.load(t1_fname)
     vox_mri_t = t1.header.get_vox2ras_tkr()
     mri_vox_t = np.linalg.inv(vox_mri_t)
@@ -312,15 +356,28 @@ for case in case_list:
     sources_mni = source_to_MNI(subject, subjects_dir, t1, sources_vox)
     sources_mni = np.round(sources_mni)
 
-    soma_left_MNI = np.array([-42, -26, 54]) # Left somatosensory cortex
-    x_range = [soma_left_MNI[0]+1, soma_left_MNI[0], soma_left_MNI[0]-1]
-    y_range = [soma_left_MNI[1]+1, soma_left_MNI[1], soma_left_MNI[1]-1]
-    z_range = [soma_left_MNI[2]+1, soma_left_MNI[2], soma_left_MNI[2]-1]
+    interest = ROI_mni['SSC_Left']
+
+    x1 = list(np.linspace(interest[0], interest[0]-3, 4))
+    x2 = list(np.linspace(interest[0], interest[0]+2, 3))
+    y1 = list(np.linspace(interest[1], interest[1]-3, 4))
+    y2 = list(np.linspace(interest[1], interest[1]+2, 3))
+    z1 = list(np.linspace(interest[2], interest[2]-3, 4))
+    z2 = list(np.linspace(interest[2], interest[2]+2, 3))
+
+    x_range = set(x1+x2)
+    y_range = set(y1+y2)
+    z_range = set(z1+z2)
+
+    cord = 0
     for i, val in enumerate(sources_mni):
         if val[0] in x_range and val[1] in y_range and val[2] in z_range:
-            print(f'Left somatosensory cortex seed index {i}, {val}')
-            seed = i
-            break
+            seed, cord = i, val
+
+    print(f'Left somatosensory cortex seed index {seed}, {cord}')
+    if seed == 0: break
+
+    #seed = 2630 # Left somatosensory cortex MNI 'fsaverage5/brain.mgz'
 
     if space == 'volume':
         filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
@@ -328,21 +385,54 @@ for case in case_list:
         epochs.apply_hilbert()
         stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True)
         save_stcs = False
-
         if save_stcs:
             save_source_estimates(stcs, subjects_dir, subject, volume_spacing)
+        #src_fs = mne.read_source_spaces(fname_src_fsaverage)
 
-        start_total_time = datetime.datetime.now()
-        print(f'Computing Power Envelope Correlation ( Orthogonalize = {corr_flag} )....')
-        if corr_flag == 'false':
-            corr = envelope_correlation(stcs, verbose=True, orthogonalize=False, seed=seed)
+        # Morphing Multiprocessing
+        morph = False
+        if morph:
+            start_total_time = datetime.now()
+            morph = mne.compute_source_morph(
+                src, subject_from=subject, subjects_dir=subjects_dir,
+                niter_affine=[1, 1, 1], niter_sdr=[1, 1, 1],  # just for speed
+                src_to=None, spacing=None, verbose=True)
+            morph.save(f'{DATA_DIR}/{subject}_{volume_spacing}', overwrite=True)
+            print("Peforming non-linear registration...")
+            pool = mp.Pool(processes=16)
+            manager = mp.Manager()
+            data_vse = manager.list()
+            for index, se_epoch_data in enumerate(stcs):
+                pool.apply_async(morph.apply, args=[se_epoch_data, data_vse])
+            pool.close()
+            pool.join()
+            time_elapsed_morph = datetime.now() - start_total_time
+            print ('Time taken for morphing computation (hh:mm:ss.ms) {}'.format(time_elapsed_morph))
+            data_vse = list(data_vse)
         else:
-            corr = envelope_correlation(stcs, verbose=True, seed=seed)
-        np.save(corr_data_file, corr)
-        print(f'Saved correlation data to file {corr_data_file}....')
-        end_processing_time = datetime.datetime.now()
-        total_processing_time = end_processing_time - start_total_time
-        print (f'Time Taken for correlation computation : {round(int(total_processing_time.seconds)/60, 2)} min')
+            data_vse = stcs
+        
+        data_vse_orth_false = data_vse.copy()
+        data_vse_orth_true = data_vse.copy()
+        del data_vse
+
+        #Power Envelope Correlation
+        start_total_time = datetime.now()
+        print(f'Computing Power Envelope Correlation....')
+
+        corr_false = envelope_correlation(data_vse_orth_false, verbose=True, orthogonalize=False, seed=seed)
+        np.save(corr_data_false_file, corr_false)
+        del data_vse_orth_false
+
+        corr_true = envelope_correlation(data_vse_orth_true, verbose=True, seed=seed)
+        np.save(corr_data_true_file, corr_true)
+        del data_vse_orth_true
+
+        time_elapsed_corr = datetime.now() - start_total_time
+        print ('Time taken for correlation computation (hh:mm:ss.ms) {}'.format(time_elapsed_corr))
+
+time_elapsed = datetime.now() - start_t
+print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
 
 # elif space == 'surface':
 #     inv = make_inverse_operator(epochs.info, fwd, cov, loose=1.0)
