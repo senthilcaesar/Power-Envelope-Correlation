@@ -5,6 +5,7 @@ from mne.io import proj
 from mne.utils.docs import stc
 import numpy as np
 import os
+import sys
 from datetime import datetime 
 import os.path as op
 import subprocess
@@ -215,7 +216,27 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
     return sources_mni
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/sub_87.txt'
+def locate_seed(interest, sources_mni):
+        x1 = list(np.linspace(interest[0], interest[0]-3, 4))
+        x2 = list(np.linspace(interest[0], interest[0]+2, 3))
+        y1 = list(np.linspace(interest[1], interest[1]-3, 4))
+        y2 = list(np.linspace(interest[1], interest[1]+2, 3))
+        z1 = list(np.linspace(interest[2], interest[2]-3, 4))
+        z2 = list(np.linspace(interest[2], interest[2]+3, 4))
+
+        x_range = set(x1+x2)
+        y_range = set(y1+y2)
+        z_range = set(z1+z2)
+
+        cord = 0
+        seed = 0
+        for i, val in enumerate(sources_mni):
+            if val[0] in x_range and val[1] in y_range and val[2] in z_range:
+                seed, cord = i, val
+                print(i, val)
+        return seed
+
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -243,194 +264,194 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
-
+freqs = {
+        #2: [0, 4],
+        #4: [2, 6],
+        #8: [6, 10],
+        16: [14, 18],
+        #32: [30, 34],
+        #64: [62, 66],
+        #128: [126, 130]
+}
 #fname_src_fsaverage = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/bem/fsaverage-vol-5-src.fif'
 #fname_src_fsaverage = '/home/senthil/Downloads/2932.fif.gz'
 #fname_t1_fsaverage = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/mri/brain.mgz'
 
 start_t = datetime.now()
-for case in case_list:
-    subject = case
-    space = 'volume'
-    volume_spacing = 3
-    DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
-    bem_check = f'{subjects_dir}/{subject}/bem/'
-    eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
-    eye_proj2 = f'{DATA_DIR}/{subject}_eyes2-proj.fif.gz'
-    fname_meg = f'{DATA_DIR}/{subject}_ses-rest_task-rest.fif'
-    t1_fname = os.path.join(subjects_dir, subject, 'mri', 'T1.mgz')
-    heartbeat_proj = f'{DATA_DIR}/{subject}_heartbeat-proj.fif.gz'
-    fwd_fname = f'{DATA_DIR}/{subject}-fwd_{volume_spacing}.fif.gz'
-    src_fname = f'{DATA_DIR}/{subject}-src_{volume_spacing}.fif.gz'
-    cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
-    raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
-    source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
-    corr_data_false_file = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_no_morph.npy'
-    corr_data_true_file = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_no_morph.npy'
-    trans = f'/home/senthil/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
 
-    #compute_bem(subject, subjects_dir)
-    #compute_scalp_surfaces(subject, subjects_dir)
-    file_trans = pathlib.Path(trans)
-    isdir_bem = pathlib.Path(bem_check)
-    # if not isdir_bem.exists():
-    #     print(f"bem directory doesn't exists for subject {subject}...")
-    #     break
+for key in freqs:
+    frequency = str(key)
+    print(f'Data filtered at frequency {frequency}...')
+    for case in case_list:
+        subject = case
+        space = 'volume'
+        volume_spacing = 5
+        DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
+        bem_check = f'{subjects_dir}/{subject}/bem/'
+        eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
+        eye_proj2 = f'{DATA_DIR}/{subject}_eyes2-proj.fif.gz'
+        fname_meg = f'{DATA_DIR}/{subject}_ses-rest_task-rest.fif'
+        t1_fname = os.path.join(subjects_dir, subject, 'mri', 'T1.mgz')
+        heartbeat_proj = f'{DATA_DIR}/{subject}_heartbeat-proj.fif.gz'
+        fwd_fname = f'{DATA_DIR}/{subject}-fwd_{volume_spacing}.fif.gz'
+        src_fname = f'{DATA_DIR}/{subject}-src_{volume_spacing}.fif.gz'
+        cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
+        raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
+        source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
+        corr_data_false_file = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}.npy'
+        corr_data_true_file = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}.npy'
+        trans = f'/home/senthil/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
 
-    if not file_trans.exists():
-        print (f'{trans} File doesnt exist...')
-        coregistration(subject, subjects_dir, trans)
+        #compute_bem(subject, subjects_dir)
+        #compute_scalp_surfaces(subject, subjects_dir)
+        file_trans = pathlib.Path(trans)
+        file_ss = pathlib.Path(src_fname)
+        file_fm = pathlib.Path(fwd_fname)
+        file_proj = pathlib.Path(raw_proj)
+        file_cov = pathlib.Path(cov_fname)
+        isdir_bem = pathlib.Path(bem_check)
+        file_corr_true = pathlib.Path(corr_data_true_file)
+        # if not isdir_bem.exists():
+        #     print(f"bem directory doesn't exists for subject {subject}...")
+        #     break
 
-    info = mne.io.read_info(fname_meg)
-    # plot_registration(info, trans, subject, subjects_dir)
+        if not file_trans.exists():
+            print (f'{trans} File doesnt exist...')
+            coregistration(subject, subjects_dir, trans)
 
-    compute_ss = False
-    if compute_ss:
-        compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss=space, 
-                            volume_spacing=volume_spacing)
+        info = mne.io.read_info(fname_meg)
+        # plot_registration(info, trans, subject, subjects_dir)
 
-    src = mne.read_source_spaces(src_fname)
-    # view_SS_brain(subject, subjects_dir, src)
-    compute_fm = False
-    if compute_fm:
-        forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
-    fwd = mne.read_forward_solution(fwd_fname)
-    # sensitivty_plot(subject, subjects_dir, fwd)
+        if not file_ss.exists():
+            compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss=space, 
+                                volume_spacing=volume_spacing)
+        src = mne.read_source_spaces(src_fname)
+        # view_SS_brain(subject, subjects_dir, src)
+        if not file_fm.exists():
+            forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
+        fwd = mne.read_forward_solution(fwd_fname)
+        # sensitivty_plot(subject, subjects_dir, fwd)
 
-    raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
-    # raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)
-    compute_proj = False
-    if compute_proj:
-        projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
-        projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
-        projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
-        print(subject)
-        if projs_ecg is not None:
-            mne.write_proj(heartbeat_proj, projs_ecg) # Saving projectors
-            raw.info['projs'] += projs_ecg
-        if projs_eog1 is not None:
-            mne.write_proj(eye_proj1, projs_eog1)
-            raw.info['projs'] += projs_eog1
-        if projs_eog2 is not None:
-            mne.write_proj(eye_proj2, projs_eog2)
-            raw.info['projs'] += projs_eog2
-        raw.apply_proj()
-        raw.save(raw_proj, proj=True, overwrite=True)
-    raw_proj_applied = mne.io.read_raw_fif(raw_proj, verbose='error', preload=True)
+        raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
+        # raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)
+        if not file_proj.exists():
+            projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
+            projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
+            projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
+            print(subject)
+            if projs_ecg is not None:
+                mne.write_proj(heartbeat_proj, projs_ecg) # Saving projectors
+                raw.info['projs'] += projs_ecg
+            if projs_eog1 is not None:
+                mne.write_proj(eye_proj1, projs_eog1)
+                raw.info['projs'] += projs_eog1
+            if projs_eog2 is not None:
+                mne.write_proj(eye_proj2, projs_eog2)
+                raw.info['projs'] += projs_eog2
+            raw.apply_proj()
+            raw.save(raw_proj, proj=True, overwrite=True)
+        raw_proj_applied = mne.io.read_raw_fif(raw_proj, verbose='error', preload=True)
 
-    compute_cov = False
-    if compute_cov:
-        cov = mne.compute_raw_covariance(raw_proj_applied) # compute before band-pass of interest
-        mne.write_cov(cov_fname, cov)
-    cov = mne.read_cov(cov_fname) 
+        if not file_cov.exists():
+            cov = mne.compute_raw_covariance(raw_proj_applied) # compute before band-pass of interest
+            mne.write_cov(cov_fname, cov)
+        cov = mne.read_cov(cov_fname) 
 
-    # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
-    # raw_proj_applied.crop(tmax=50)
-    raw_proj_applied.filter(l_freq=14, h_freq=18, n_jobs=16)
-    events = mne.make_fixed_length_events(raw_proj_applied, duration=5.)
-    epochs = mne.Epochs(raw_proj_applied, events=events, tmin=0, tmax=5.,
-                        baseline=None, preload=True)
-    # epochs = epochs.resample(5, npad='auto')
-    # plot_psd(epochs)
-    data_cov = mne.compute_covariance(epochs)
-    
+        # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
+        # raw_proj_applied.crop(tmax=50)
+        raw_proj_applied.filter(l_freq=freqs[key][0], h_freq=freqs[key][1], n_jobs=16)
+        events = mne.make_fixed_length_events(raw_proj_applied, duration=5.)
+        epochs = mne.Epochs(raw_proj_applied, events=events, tmin=0, tmax=5.,
+                            baseline=None, preload=True)
+        # epochs = epochs.resample(5, npad='auto')
+        # plot_psd(epochs)
+        data_cov = mne.compute_covariance(epochs)
 
-    '''
-    Get the seed location from freesurfer fsaverage 'brain.mgz'
-    In order to compute group level statistics, data representations across subjects must be morphed to a common frame, 
-    such that anatomically and functional similar structures are represented at the same spatial location for all subjects equally.
-    All the subject volume source estimates are morphed to FreeSurfer’s ‘fsaverage’ T1 weighted MRI (brain).
-    '''
-    #t1 = nib.load(fname_t1_fsaverage)
-    #src = mne.read_source_spaces(fname_src_fsaverage)
-    t1 = nib.load(t1_fname)
-    vox_mri_t = t1.header.get_vox2ras_tkr()
-    mri_vox_t = np.linalg.inv(vox_mri_t)
-    sources = []
-    seed = 0
-    for src_ in src:
-        points = src_['rr'][src_['inuse'].astype(bool)]
-        sources.append(apply_trans(mri_vox_t, points * 1e3))
-        sources = np.concatenate(sources, axis=0)
-    sources_vox = np.round(sources)
-    sources_mni = source_to_MNI(subject, subjects_dir, t1, sources_vox)
-    sources_mni = np.round(sources_mni)
+        '''
+        Get the seed location from freesurfer fsaverage 'brain.mgz'
+        In order to compute group level statistics, data representations across subjects must be morphed to a common frame, 
+        such that anatomically and functional similar structures are represented at the same spatial location for all subjects equally.
+        All the subject volume source estimates are morphed to FreeSurfer’s ‘fsaverage’ T1 weighted MRI (brain).
+        '''
+        #t1 = nib.load(fname_t1_fsaverage)
+        #src = mne.read_source_spaces(fname_src_fsaverage)
+        t1 = nib.load(t1_fname)
+        vox_mri_t = t1.header.get_vox2ras_tkr()
+        mri_vox_t = np.linalg.inv(vox_mri_t)
+        sources = []
+        for src_ in src:
+            points = src_['rr'][src_['inuse'].astype(bool)]
+            sources.append(apply_trans(mri_vox_t, points * 1e3))
+            sources = np.concatenate(sources, axis=0)
+        sources_vox = np.round(sources)
+        sources_mni = source_to_MNI(subject, subjects_dir, t1, sources_vox)
+        sources_mni = np.round(sources_mni)
 
-    interest = ROI_mni['SSC_Left']
+        interest_left = ROI_mni['SSC_Left']
+        interest_right = ROI_mni['SSC_Right']
 
-    x1 = list(np.linspace(interest[0], interest[0]-3, 4))
-    x2 = list(np.linspace(interest[0], interest[0]+2, 3))
-    y1 = list(np.linspace(interest[1], interest[1]-3, 4))
-    y2 = list(np.linspace(interest[1], interest[1]+2, 3))
-    z1 = list(np.linspace(interest[2], interest[2]-3, 4))
-    z2 = list(np.linspace(interest[2], interest[2]+2, 3))
+        seed_left = locate_seed(interest_left, sources_mni)
+        seed_right = locate_seed(interest_right, sources_mni)
 
-    x_range = set(x1+x2)
-    y_range = set(y1+y2)
-    z_range = set(z1+z2)
+        print(f'Left seed index {seed_left}') if seed_left != 0  else sys.exit()
+        print(f'Right seed index {seed_right}') if seed_right != 0  else sys.exit()
 
-    cord = 0
-    for i, val in enumerate(sources_mni):
-        if val[0] in x_range and val[1] in y_range and val[2] in z_range:
-            seed, cord = i, val
+        if space == 'volume':
+            filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
+                            pick_ori='max-power', weight_norm='nai')
+            epochs.apply_hilbert()
+            stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True)
 
-    print(f'Left somatosensory cortex seed index {seed}, {cord}')
-    if seed == 0: break
+            save_stcs = False
+            if save_stcs:
+                save_source_estimates(stcs, subjects_dir, subject, volume_spacing)
+            #src_fs = mne.read_source_spaces(fname_src_fsaverage)
 
-    #seed = 2630 # Left somatosensory cortex MNI 'fsaverage5/brain.mgz'
-
-    if space == 'volume':
-        filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
-                        pick_ori='max-power', weight_norm='nai')
-        epochs.apply_hilbert()
-        stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True)
-        save_stcs = False
-        if save_stcs:
-            save_source_estimates(stcs, subjects_dir, subject, volume_spacing)
-        #src_fs = mne.read_source_spaces(fname_src_fsaverage)
-
-        # Morphing Multiprocessing
-        morph = False
-        if morph:
+            # Morphing Multiprocessing
+            data_vse = []
+            morph = False
+            if morph:
+                start_total_time = datetime.now()
+                morph = mne.compute_source_morph(
+                    src, subject_from=subject, subjects_dir=subjects_dir,
+                    niter_affine=[1, 1, 1], niter_sdr=[1, 1, 1],  # just for speed
+                    src_to=None, spacing=None, verbose=True)
+                morph.save(f'{DATA_DIR}/{subject}_{volume_spacing}', overwrite=True)
+                print("Peforming non-linear registration...")
+                pool = mp.Pool(processes=16)
+                manager = mp.Manager()
+                data_vse = manager.list()
+                for index, se_epoch_data in enumerate(stcs):
+                    pool.apply_async(morph.apply, args=[se_epoch_data, data_vse])
+                pool.close()
+                pool.join()
+                time_elapsed_morph = datetime.now() - start_total_time
+                print ('Time taken for morphing computation (hh:mm:ss.ms) {}'.format(time_elapsed_morph))
+                data_vse = list(data_vse)
+            else:
+                data_vse = stcs
+                
+            #Power Envelope Correlation
             start_total_time = datetime.now()
-            morph = mne.compute_source_morph(
-                src, subject_from=subject, subjects_dir=subjects_dir,
-                niter_affine=[1, 1, 1], niter_sdr=[1, 1, 1],  # just for speed
-                src_to=None, spacing=None, verbose=True)
-            morph.save(f'{DATA_DIR}/{subject}_{volume_spacing}', overwrite=True)
-            print("Peforming non-linear registration...")
-            pool = mp.Pool(processes=16)
-            manager = mp.Manager()
-            data_vse = manager.list()
-            for index, se_epoch_data in enumerate(stcs):
-                pool.apply_async(morph.apply, args=[se_epoch_data, data_vse])
-            pool.close()
-            pool.join()
-            time_elapsed_morph = datetime.now() - start_total_time
-            print ('Time taken for morphing computation (hh:mm:ss.ms) {}'.format(time_elapsed_morph))
-            data_vse = list(data_vse)
-        else:
-            data_vse = stcs
+            print(f'Computing Power Envelope Correlation for {subject}....')
+            corr_false = False
+            if corr_false:
+                corr_false = envelope_correlation(data_vse, verbose=True, orthogonalize=False, seed=seed_left)
+                np.save(corr_data_false_file, corr_false)
+                del data_vse
+            else:
+                if not file_corr_true.exists():
+                    corr_true = envelope_correlation(data_vse, verbose=True, seed=seed_left, n_jobs=32)
+                    np.save(corr_data_true_file, corr_true[seed_right])
+                else:
+                    print('Correlation already computed...')
+                    print(file_corr_true)
+                del data_vse
+            time_elapsed_corr = datetime.now() - start_total_time
+            print ('Time taken for correlation computation (hh:mm:ss.ms) {}'.format(time_elapsed_corr))
 
-        #Power Envelope Correlation
-        start_total_time = datetime.now()
-        print(f'Computing Power Envelope Correlation....')
-
-        corr_false = True
-        if corr_false:
-            corr_false = envelope_correlation(data_vse, verbose=True, orthogonalize=False, seed=seed)
-            np.save(corr_data_false_file, corr_false)
-            del data_vse
-        else:
-            corr_true = envelope_correlation(data_vse, verbose=True, seed=seed)
-            np.save(corr_data_true_file, corr_true)
-            del data_vse
-
-        time_elapsed_corr = datetime.now() - start_total_time
-        print ('Time taken for correlation computation (hh:mm:ss.ms) {}'.format(time_elapsed_corr))
-
-time_elapsed = datetime.now() - start_t
-print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
+    time_elapsed = datetime.now() - start_t
+    print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
 
 # elif space == 'surface':
 #     inv = make_inverse_operator(epochs.info, fwd, cov, loose=1.0)
