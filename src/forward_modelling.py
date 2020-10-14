@@ -1,3 +1,4 @@
+from operator import ne
 from pickle import NONE
 from re import VERBOSE
 import mne
@@ -230,11 +231,30 @@ def locate_seed(interest, sources_mni):
 
         cord = 0
         seed = 0
+        seeds_nearby = []
+        min_dist = 100
         for i, val in enumerate(sources_mni):
             if val[0] in x_range and val[1] in y_range and val[2] in z_range:
                 seed, cord = i, val
-                print(i, val)
-        return seed
+                #print(i, val)
+                seeds_nearby.append((i, val))
+        if len(seeds_nearby) == 1:
+            print(f'Seed MNI location {seeds_nearby[0]}')
+            return seeds_nearby[0][0]
+        else:
+            '''
+            Find the nearest neighbor
+            '''
+            for neighbor in seeds_nearby:
+                p1 = np.array([interest[0], interest[1], interest[2]])
+                p2 = np.array([neighbor[1][0], neighbor[1][1],  neighbor[1][2]])
+                squared_dist = np.sum((p1-p2)**2, axis=0)
+                dist = np.sqrt(squared_dist)
+                if dist < min_dist: min_dist = dist; seed = neighbor[0]
+            print(f'Seed MNI location {seed}... Min distance {min_dist}')
+            return seed
+
+
 
 cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
@@ -265,13 +285,24 @@ ROI_mni = {
     }
 
 freqs = {
-        #2: [0, 4],
-        #4: [2, 6],
-        #8: [6, 10],
+        2: [0, 4],
+        4: [2, 6],
+        6: [4, 8],
+        8: [6, 10],
+        10: [8, 12],
+        12: [10, 14],
+        14: [12, 16],
         16: [14, 18],
-        #32: [30, 34],
-        #64: [62, 66],
-        #128: [126, 130]
+        18: [16, 20],
+        20: [18, 22],
+        24: [22, 26],
+        28: [26, 30],
+        32: [30, 34],
+        42: [40, 44],
+        52: [50, 54],
+        64: [62, 66],
+        96: [94, 98],
+        128: [126, 130]
 }
 #fname_src_fsaverage = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/bem/fsaverage-vol-5-src.fif'
 #fname_src_fsaverage = '/home/senthil/Downloads/2932.fif.gz'
@@ -281,7 +312,7 @@ start_t = datetime.now()
 
 for key in freqs:
     frequency = str(key)
-    print(f'Data filtered at frequency {frequency}...')
+    print(f'Data filtered at frequency {frequency} Hz...')
     for case in case_list:
         subject = case
         space = 'volume'
@@ -298,8 +329,12 @@ for key in freqs:
         cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
         raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
         source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
-        corr_data_false_file = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}.npy'
-        corr_data_true_file = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}.npy'
+        corr_data_false_file_ac = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_ac.npy'
+        corr_data_true_file_ac = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_ac.npy'
+        corr_data_false_file_sc = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_sc.npy'
+        corr_data_true_file_sc = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_sc.npy'
+        corr_data_false_file_vc = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_vc.npy'
+        corr_data_true_file_vc = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vc.npy'
         trans = f'/home/senthil/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
 
         #compute_bem(subject, subjects_dir)
@@ -310,7 +345,6 @@ for key in freqs:
         file_proj = pathlib.Path(raw_proj)
         file_cov = pathlib.Path(cov_fname)
         isdir_bem = pathlib.Path(bem_check)
-        file_corr_true = pathlib.Path(corr_data_true_file)
         # if not isdir_bem.exists():
         #     print(f"bem directory doesn't exists for subject {subject}...")
         #     break
@@ -358,7 +392,7 @@ for key in freqs:
         cov = mne.read_cov(cov_fname) 
 
         # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
-        # raw_proj_applied.crop(tmax=50)
+        # raw_proj_applied.crop(tmax=10)
         raw_proj_applied.filter(l_freq=freqs[key][0], h_freq=freqs[key][1], n_jobs=16)
         events = mne.make_fixed_length_events(raw_proj_applied, duration=5.)
         epochs = mne.Epochs(raw_proj_applied, events=events, tmin=0, tmax=5.,
@@ -387,14 +421,29 @@ for key in freqs:
         sources_mni = source_to_MNI(subject, subjects_dir, t1, sources_vox)
         sources_mni = np.round(sources_mni)
 
-        interest_left = ROI_mni['SSC_Left']
-        interest_right = ROI_mni['SSC_Right']
+        interest_left_ac = ROI_mni['AC_Left']
+        interest_right_ac = ROI_mni['AC_Right']
+        interest_left_sc = ROI_mni['SSC_Left']
+        interest_right_sc = ROI_mni['SSC_Right']
+        interest_left_vc = ROI_mni['VC_Left']
+        interest_right_vc = ROI_mni['VC_Right']
 
-        seed_left = locate_seed(interest_left, sources_mni)
-        seed_right = locate_seed(interest_right, sources_mni)
+        seed_left_ac = locate_seed(interest_left_ac, sources_mni)
+        seed_right_ac = locate_seed(interest_right_ac, sources_mni)
+        seed_left_sc = locate_seed(interest_left_sc, sources_mni)
+        seed_right_sc = locate_seed(interest_right_sc, sources_mni)
+        seed_left_vc = locate_seed(interest_left_vc, sources_mni)
+        seed_right_vc = locate_seed(interest_right_vc, sources_mni)
 
-        print(f'Left seed index {seed_left}') if seed_left != 0  else sys.exit()
-        print(f'Right seed index {seed_right}') if seed_right != 0  else sys.exit()
+        print(f'Left seed index Auditory cortex {seed_left_ac}') if seed_left_ac != 0  else sys.exit()
+        print(f'Right seed index Auditory cortex {seed_right_ac}') if seed_right_ac != 0  else sys.exit()
+        print(f'Left seed index Somatosensory cortex {seed_left_sc}') if seed_left_sc != 0  else sys.exit()
+        print(f'Right seed index Somatosensory cortex {seed_right_sc}') if seed_right_sc != 0  else sys.exit()
+        print(f'Left seed index Visual cortex {seed_left_vc}') if seed_left_vc != 0  else sys.exit()
+        print(f'Right seed index Visual cortex {seed_right_vc}') if seed_right_vc != 0  else sys.exit()
+
+        seed_l = []; seed_l.append(seed_left_ac); seed_l.append(seed_left_sc); seed_l.append(seed_left_vc)
+        seed_r = []; seed_r.append(seed_right_ac); seed_r.append(seed_right_sc); seed_r.append(seed_right_vc)
 
         if space == 'volume':
             filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
@@ -436,16 +485,14 @@ for key in freqs:
             print(f'Computing Power Envelope Correlation for {subject}....')
             corr_false = False
             if corr_false:
-                corr_false = envelope_correlation(data_vse, verbose=True, orthogonalize=False, seed=seed_left)
-                np.save(corr_data_false_file, corr_false)
+                corr_false = envelope_correlation(data_vse, verbose=True, orthogonalize=False, seed=seed_l)
+                #np.save(corr_data_false_file, corr_false)
                 del data_vse
             else:
-                if not file_corr_true.exists():
-                    corr_true = envelope_correlation(data_vse, verbose=True, seed=seed_left, n_jobs=32)
-                    np.save(corr_data_true_file, corr_true[seed_right])
-                else:
-                    print('Correlation already computed...')
-                    print(file_corr_true)
+                corr_true = envelope_correlation(data_vse, verbose=True, seed=seed_l, n_jobs=20)
+                np.save(corr_data_true_file_ac, corr_true[0][seed_r[0]])
+                np.save(corr_data_true_file_sc, corr_true[1][seed_r[1]])
+                np.save(corr_data_true_file_vc, corr_true[2][seed_r[2]])
                 del data_vse
             time_elapsed_corr = datetime.now() - start_total_time
             print ('Time taken for correlation computation (hh:mm:ss.ms) {}'.format(time_elapsed_corr))

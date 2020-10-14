@@ -32,35 +32,36 @@ def compute_correlation(epoch_data, corrs, seed):
         # compute variances using linalg.norm (square, sum, sqrt) since mean=0
         data_mag_std = np.linalg.norm(data_mag_nomean, axis=-1)
         data_mag_std[data_mag_std == 0] = 1
-        corr = np.empty((n_nodes, 1))
-        
 
-        label_data = epoch_data[seed].copy()
-        del epoch_data
-       
-       # print('Epoch data removed...') 
-        if orthogonalize is False:  # the new code
-            label_data_orth = data_mag
-            label_data_orth_std = data_mag_std
-        else:
-            label_data_orth = (label_data * data_conj_scaled).imag
-            label_data_orth -= np.mean(label_data_orth, axis=-1,
+        corr = np.zeros((n_nodes, n_nodes))
+        
+        for li, seed_index in enumerate(seed):
+
+            label_data = epoch_data[seed_index]
+            # print('Epoch data removed...') 
+            if orthogonalize is False:  # the new code
+                label_data_orth = data_mag
+                label_data_orth_std = data_mag_std
+            else:
+                label_data_orth = (label_data * data_conj_scaled).imag
+                label_data_orth -= np.mean(label_data_orth, axis=-1,
                                                keepdims=True)            
 
-            label_data_orth_std = np.linalg.norm(label_data_orth, axis=-1)
-            label_data_orth_std[label_data_orth_std == 0] = 1
+                label_data_orth_std = np.linalg.norm(label_data_orth, axis=-1)
+                label_data_orth_std[label_data_orth_std == 0] = 1
 
-        # correlation is dot product divided by variances
-        corr = np.dot(label_data_orth, data_mag_nomean[seed])
-        corr /= data_mag_std[seed]
-        corr /= label_data_orth_std
+            # correlation is dot product divided by variances
+            corr[li] = np.dot(label_data_orth, data_mag_nomean[seed_index])
+            corr[li] /= data_mag_std[seed_index]
+            corr[li] /= label_data_orth_std
 
-        if orthogonalize is not False:
+        #if orthogonalize is not False:
             # Make it symmetric (it isn't at this point)
             corr = np.abs(corr)
             corr = (corr.T + corr) / 2.
-
+            
         corrs.append(corr)
+        del corr
 
 
 # def envelope_correlation(data, combine='mean', orthogonalize="pairwise", verbose=None, seed=None):
@@ -199,7 +200,7 @@ def compute_correlation(epoch_data, corrs, seed):
 
 @verbose
 def envelope_correlation(data, combine='mean', orthogonalize="pairwise",
-                         verbose=None, seed=None, n_jobs=32):
+                         verbose=None, seed=None, n_jobs=20):
 
 
     _check_option('orthogonalize', orthogonalize, (False, 'pairwise'))
