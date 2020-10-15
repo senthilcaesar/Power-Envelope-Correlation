@@ -286,15 +286,15 @@ ROI_mni = {
 
 freqs = {
         #2: [0, 4],
-        4: [2, 6],
-        6: [4, 8],
-        8: [6, 10],
-        10: [8, 12],
-        12: [10, 14],
-        14: [12, 16],
-        16: [14, 18],
-        18: [16, 20],
-        20: [18, 22],
+        #4: [2, 6],
+        #6: [4, 8],
+        #8: [6, 10],
+        #10: [8, 12],
+        #12: [10, 14],
+        #14: [12, 16],
+        #16: [14, 18],
+        #18: [16, 20],
+        #20: [18, 22],
         24: [22, 26],
         28: [26, 30],
         32: [30, 34],
@@ -482,14 +482,19 @@ for key in freqs:
                 
             #Power Envelope Correlation
             start_total_time = datetime.now()
-            print(f'Computing Power Envelope Correlation for {subject}....')
             corr_false = False
             if corr_false:
-                corr_false = envelope_correlation(data_vse, verbose=True, orthogonalize=False, seed=seed_l)
+                print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize False')
+                corr_false = envelope_correlation(data_vse, verbose=True, orthogonalize=False, seed=seed_l, n_jobs=20)
+                #print(corr_false[0][seed_l[0]], corr_false[0][seed_l[0]], corr_false[0][seed_l[0]])
+                #print(corr_false[0][seed_r[0]], corr_false[0][seed_r[0]], corr_false[0][seed_r[0]])
                 #np.save(corr_data_false_file, corr_false)
                 del data_vse
             else:
+                print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
                 corr_true = envelope_correlation(data_vse, verbose=True, seed=seed_l, n_jobs=20)
+                print(corr_true[0][seed_l[0]], corr_true[0][seed_l[0]], corr_true[0][seed_l[0]])
+                print(corr_true[0][seed_r[0]], corr_true[0][seed_r[0]], corr_true[0][seed_r[0]])
                 np.save(corr_data_true_file_ac, corr_true[0][seed_r[0]])
                 np.save(corr_data_true_file_sc, corr_true[1][seed_r[1]])
                 np.save(corr_data_true_file_vc, corr_true[2][seed_r[2]])
