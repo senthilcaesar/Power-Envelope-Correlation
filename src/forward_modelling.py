@@ -256,7 +256,7 @@ def locate_seed(interest, sources_mni):
 
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/10.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -285,7 +285,7 @@ ROI_mni = {
     }
 
 freqs = {
-        2: [0, 4],
+        #2: [0, 4],
         4: [2, 6],
         6: [4, 8],
         8: [6, 10],
