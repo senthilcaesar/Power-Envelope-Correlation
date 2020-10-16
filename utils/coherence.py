@@ -49,7 +49,7 @@ def compute_coherence(epoch_data, corrs, seed):
         coherency, freqs, times, n_epochs, n_tapers = spectral_connectivity(
             power_envelope, method='cohy',sfreq=sfreq, n_jobs=4)
 
-        coherence_correlation = np.abs(coherency)
+        coherence_correlation = np.real(coherency)
         print(coherence_correlation)
 
         corrs.append(coherence_correlation)
