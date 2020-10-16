@@ -261,13 +261,14 @@ subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
+'''Bilateral sensory locations in MNI space'''
 ROI_mni = { 
-    'AC_Left':[-54, -22, 10],
-    'AC_Right':[52, -24, 12],
-    'SSC_Left':[-42, -26, 54],
-    'SSC_Right':[38, -32, 48],
-    'VC_Left':[-20, -86, 18],
-    'VC_Right':[16, -80, 26],
+    'AC_Left':[-54, -22, 10],   # Auditory cortex left
+    'AC_Right':[52, -24, 12],   # Auditory cortex right
+    'SSC_Left':[-42, -26, 54],  # Somatosensory cortex left
+    'SSC_Right':[38, -32, 48],  # Somatosensory cortex right
+    'VC_Left':[-20, -86, 18],   # Visual cortex left
+    'VC_Right':[16, -80, 26],   # Visual cortex right
     'MT+_Left':[-47, -69, -3],
     'MT+_Right':[54, -63, -8],
     'MTL_Left':[-20, -40, -10],
@@ -285,16 +286,16 @@ ROI_mni = {
     }
 
 freqs = {
-        #2: [0, 4],
-        #4: [2, 6],
-        #6: [4, 8],
-        #8: [6, 10],
-        #10: [8, 12],
-        #12: [10, 14],
-        #14: [12, 16],
-        #16: [14, 18],
-        #18: [16, 20],
-        #20: [18, 22],
+        2: [0, 4],
+        4: [2, 6],
+        6: [4, 8],
+        8: [6, 10],
+        10: [8, 12],
+        12: [10, 14],
+        14: [12, 16],
+        16: [14, 18],
+        18: [16, 20],
+        20: [18, 22],
         24: [22, 26],
         28: [26, 30],
         32: [30, 34],
@@ -345,9 +346,6 @@ for key in freqs:
         file_proj = pathlib.Path(raw_proj)
         file_cov = pathlib.Path(cov_fname)
         isdir_bem = pathlib.Path(bem_check)
-        # if not isdir_bem.exists():
-        #     print(f"bem directory doesn't exists for subject {subject}...")
-        #     break
 
         if not file_trans.exists():
             print (f'{trans} File doesnt exist...')
@@ -402,13 +400,8 @@ for key in freqs:
         data_cov = mne.compute_covariance(epochs)
 
         '''
-        Get the seed location from freesurfer fsaverage 'brain.mgz'
-        In order to compute group level statistics, data representations across subjects must be morphed to a common frame, 
-        such that anatomically and functional similar structures are represented at the same spatial location for all subjects equally.
-        All the subject volume source estimates are morphed to FreeSurfer’s ‘fsaverage’ T1 weighted MRI (brain).
+        Get the seed location from each subject T1 Image
         '''
-        #t1 = nib.load(fname_t1_fsaverage)
-        #src = mne.read_source_spaces(fname_src_fsaverage)
         t1 = nib.load(t1_fname)
         vox_mri_t = t1.header.get_vox2ras_tkr()
         mri_vox_t = np.linalg.inv(vox_mri_t)
@@ -450,57 +443,31 @@ for key in freqs:
                             pick_ori='max-power', weight_norm='nai')
             epochs.apply_hilbert()
             stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True)
-
-            save_stcs = False
-            if save_stcs:
-                save_source_estimates(stcs, subjects_dir, subject, volume_spacing)
-            #src_fs = mne.read_source_spaces(fname_src_fsaverage)
-
-            # Morphing Multiprocessing
-            data_vse = []
-            morph = False
-            if morph:
-                start_total_time = datetime.now()
-                morph = mne.compute_source_morph(
-                    src, subject_from=subject, subjects_dir=subjects_dir,
-                    niter_affine=[1, 1, 1], niter_sdr=[1, 1, 1],  # just for speed
-                    src_to=None, spacing=None, verbose=True)
-                morph.save(f'{DATA_DIR}/{subject}_{volume_spacing}', overwrite=True)
-                print("Peforming non-linear registration...")
-                pool = mp.Pool(processes=16)
-                manager = mp.Manager()
-                data_vse = manager.list()
-                for index, se_epoch_data in enumerate(stcs):
-                    pool.apply_async(morph.apply, args=[se_epoch_data, data_vse])
-                pool.close()
-                pool.join()
-                time_elapsed_morph = datetime.now() - start_total_time
-                print ('Time taken for morphing computation (hh:mm:ss.ms) {}'.format(time_elapsed_morph))
-                data_vse = list(data_vse)
-            else:
-                data_vse = stcs
                 
-            #Power Envelope Correlation
-            start_total_time = datetime.now()
+            # Power Envelope Correlation
             corr_false = False
             if corr_false:
                 print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize False')
-                corr_false = envelope_correlation(data_vse, verbose=True, orthogonalize=False, seed=seed_l, n_jobs=20)
-                #print(corr_false[0][seed_l[0]], corr_false[0][seed_l[0]], corr_false[0][seed_l[0]])
-                #print(corr_false[0][seed_r[0]], corr_false[0][seed_r[0]], corr_false[0][seed_r[0]])
-                #np.save(corr_data_false_file, corr_false)
-                del data_vse
+                corr_false = envelope_correlation(stcs, verbose=True, orthogonalize=False, seed=seed_l, n_jobs=20)
+                del stcs
             else:
                 print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
-                corr_true = envelope_correlation(data_vse, verbose=True, seed=seed_l, n_jobs=20)
-                print(corr_true[0][seed_l[0]], corr_true[0][seed_l[0]], corr_true[0][seed_l[0]])
-                print(corr_true[0][seed_r[0]], corr_true[0][seed_r[0]], corr_true[0][seed_r[0]])
-                np.save(corr_data_true_file_ac, corr_true[0][seed_r[0]])
-                np.save(corr_data_true_file_sc, corr_true[1][seed_r[1]])
-                np.save(corr_data_true_file_vc, corr_true[2][seed_r[2]])
-                del data_vse
-            time_elapsed_corr = datetime.now() - start_total_time
-            print ('Time taken for correlation computation (hh:mm:ss.ms) {}'.format(time_elapsed_corr))
+                
+                corr_true_ac = envelope_correlation(stcs, verbose=True, seed=seed_left_ac, n_jobs=18)
+                np.save(corr_data_true_file_ac, corr_true_ac[seed_right_ac])
+                print(f'Correlation between Left AC and Right AC: {corr_true_ac[seed_right_ac]}')
+
+                stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True) # Re-setting generator
+                corr_true_sc = envelope_correlation(stcs, verbose=True, seed=seed_left_sc, n_jobs=18)
+                np.save(corr_data_true_file_sc, corr_true_sc[seed_right_sc])
+                print(f'Correlation between Left SC and Right SC: {corr_true_sc[seed_right_sc]}')
+
+                stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True) # Re-setting generator
+                corr_true_vc = envelope_correlation(stcs, verbose=True, seed=seed_left_vc, n_jobs=18)
+                np.save(corr_data_true_file_vc, corr_true_vc[seed_right_vc])
+                print(f'Correlation between Left VC and Right VC: {corr_true_vc[seed_right_vc]}')
+                
+                del stcs
 
     time_elapsed = datetime.now() - start_t
     print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
