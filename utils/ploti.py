@@ -15,7 +15,6 @@ sensory_mean = {'sc':None, 'ac':None, 'vc':None}
 fig, ax = plt.subplots(figsize=(5, 3))
 x_pnts = np.arange(len(freq))
 
-mean_dict = []
 for label in sensory_mean:
     myDict = {key: [] for key in freq}
     for subject in case_list:
@@ -25,7 +24,6 @@ for label in sensory_mean:
             if Path(corr_data_file).exists():
                 corr_data = float(np.load(corr_data_file))
                 myDict[val].append(corr_data)
-    mean_dict.append(myDict)
     sensory_mean[label] = [np.mean(value) for key, value in myDict.items()]
     
 
