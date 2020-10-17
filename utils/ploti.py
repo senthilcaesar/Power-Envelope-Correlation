@@ -15,6 +15,7 @@ sensory_mean = {'sc':None, 'ac':None, 'vc':None}
 fig, ax = plt.subplots(figsize=(5, 3))
 x_pnts = np.arange(len(freq))
 
+mean_dict = []
 for label in sensory_mean:
     myDict = {key: [] for key in freq}
     for subject in case_list:
@@ -24,6 +25,7 @@ for label in sensory_mean:
             if Path(corr_data_file).exists():
                 corr_data = float(np.load(corr_data_file))
                 myDict[val].append(corr_data)
+    mean_dict.append(myDict)
     sensory_mean[label] = [np.mean(value) for key, value in myDict.items()]
     
 
@@ -34,11 +36,14 @@ ax.plot(x_pnts, sensory_mean['sc'], '-ok', color='gold', markerfacecolor='black'
 ax.plot(x_pnts, sensory_mean['vc'], '-ok', color='blue', markerfacecolor='black', 
         label='Visual', alpha=1, markersize=3, linewidth=0.5)
 
-# sem_color = {'ac':'r'} #, 'sc':'c1', 'vc':'c2'}
-# for label in sem_color:
-#     for i, val in enumerate(freq):
-#         ax.errorbar(x_pnts[i], myDict[val], 
-#                     ecolor="black")
+error_bar = False
+if error_bar:
+    linestyle = {"linestyle":"--", "linewidth":15, "markeredgewidth":5, 
+                  "elinewidth":5, "capsize":10, "alpha":0.2}
+    sem_color = {'sc':"gold", 'ac':"red", 'vc':"blue"}
+    for k, label in enumerate(sem_color):
+        for i, val in enumerate(freq):
+            ax.errorbar(x_pnts[i], mean_dict[k][val],color=sem_color[label], **linestyle)
 
 ax.set_xticks(x_pnts)
 ax.set_yticks(y_corr)
