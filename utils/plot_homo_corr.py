@@ -2,14 +2,14 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/10.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
-flag = 'True'
+flag = 'true'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
 
-freq = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 42, 52, 64, 96, 128]
+freq = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr = [0, 0.04, 0.08, 0.12, 0.16]
 sensory_mean = {'sc':None, 'ac':None, 'vc':None}
 fig, ax = plt.subplots(figsize=(5, 3))
@@ -21,14 +21,19 @@ for label in sensory_mean:
     for subject in case_list:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         for val in freq:
-            corr_data_file = f'{DATA_DIR}/{subject}_corr_ortho_true_5_{val}_{label}.npy'
+            corr_data_file = f'{DATA_DIR}/{subject}_corr_ortho'\
+                            f'_{flag}_30_{val}_{label}_wholebrain.npy'
             if Path(corr_data_file).exists():
-                corr_data = float(np.load(corr_data_file))
+                if label == 'sc':
+                    corr_data = float(np.load(corr_data_file)[1])*1.73
+                elif label == 'ac':
+                    corr_data = float(np.load(corr_data_file)[3])*1.73
+                else:
+                    corr_data = float(np.load(corr_data_file)[5])*1.73
                 myDict[val].append(corr_data)
     mean_dict.append(myDict)
     sensory_mean[label] = [np.mean(value) for key, value in myDict.items()]
     
-
 
 ax.plot(x_pnts, sensory_mean['ac'], '-ok', color='red', markerfacecolor='black', 
         label='Auditory', alpha=1, markersize=3, linewidth=0.5)
@@ -52,7 +57,8 @@ ax.set_xticklabels(freq, fontsize=4)
 ax.set_yticklabels(y_corr, fontsize=4)
 ax.set_xlabel('Carrier frequency (Hz)', fontsize=4)
 ax.set_ylabel('Correlation', fontsize=4)
-ax.set_title(f'Power envelope correlation between orthogonalized ' \
-             f'spontaneous signals from homologous early sensory areas - 10 subjects', fontsize=4)
+ax.set_title(f'Correlation between orthogonalized '
+             f'spontaneous signals from homologous early ' 
+             f'sensory areas - 50 subjects ( Continuous data )', fontsize=4)
 ax.legend(fontsize=8)
 plt.savefig('/home/senthil/Desktop/correlation.png', dpi=600)

@@ -1,9 +1,3 @@
-# Authors: Eric Larson <larson.eric.d@gmail.com>
-#          Sheraz Khan <sheraz@khansheraz.com>
-#          Denis Engemann <denis.engemann@gmail.com>
-#
-# License: BSD (3-clause)
-
 import numpy as np
 import multiprocessing as mp
 from multiprocessing import Semaphore
@@ -14,7 +8,7 @@ from ..utils import verbose, _check_combine, _check_option
 from multiprocessing import Process, Manager, Value, Pool
 from mne.connectivity import spectral_connectivity
 
-def compute_coherence(epoch_data, corrs, seed):
+def compute_coherence(epoch_data, corrs):
 
         combine='mean'
         orthogonalize="pairwise"
@@ -56,7 +50,7 @@ def compute_coherence(epoch_data, corrs, seed):
 
 
 @verbose
-def envelope_coherence(data, combine='mean',verbose=None, seed=None, n_jobs=32):
+def envelope_coherence(data, combine='mean',verbose=None, seed=None, n_jobs=16):
 
 
     from scipy.signal import hilbert
@@ -70,7 +64,7 @@ def envelope_coherence(data, combine='mean',verbose=None, seed=None, n_jobs=32):
     manager = mp.Manager()
     corrs = manager.list()
     for ei, epoch_data in enumerate(data):
-        pool.apply_async(compute_correlation, args=[epoch_data, corrs, seed])
+        pool.apply_async(compute_coherence, args=[epoch_data, corrs])
     pool.close()
     pool.join()
 

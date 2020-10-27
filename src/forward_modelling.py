@@ -3,7 +3,8 @@ from pickle import NONE
 from re import VERBOSE
 import mne
 from mne.io import proj
-from mne.utils.docs import stc
+from mne.utils.docs import epo, stc
+from nibabel import freesurfer
 import numpy as np
 import os
 import sys
@@ -25,13 +26,16 @@ import pathlib
 from mne.time_frequency import tfr_morlet
 from mne.viz import plot_alignment, set_3d_view
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
-from mne.connectivity import envelope_correlation
-from mne.beamformer import make_lcmv, apply_lcmv_epochs
+from mne.connectivity import envelope_correlation, envelope_coherence
+from mne.beamformer import make_lcmv, apply_lcmv_epochs, apply_lcmv_raw
 from mne.minimum_norm import make_inverse_operator, apply_inverse_epochs
 import matplotlib.pyplot as plt
 from surfer.utils import verbose
 os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
+import sys
+sys.path.insert(1, '/home/senthil/Downloads')
+from padding import symmetric_padding
 
 
 def compute_bem(subject, subjects_dir):
@@ -121,8 +125,8 @@ def forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname):
                                     meg=True, eeg=False, mindist=5.0, n_jobs=16)
     # print(fwd)
     mne.write_forward_solution(fwd_fname, fwd, overwrite=True, verbose=None)
-    leadfield = fwd['sol']['data']
-    print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
+    #leadfield = fwd['sol']['data']
+    #print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
     # np.save(f'{subjects_dir}/{subject}/mne_files/{subject}_GainMatrix.npy', leadfield)
 
 
@@ -205,6 +209,25 @@ def MNI_to_RASandVoxel(subject, subjects_dir, t1, mni_coords):
     return(ras_coords, vox_coords)
 
 
+def MNI_to_MRI(subject, subjects_dir, t1, mni_coords):
+    # MNI to Native scanner RAS
+    ras_mni_t = mne.transforms.read_ras_mni_t(subject, subjects_dir)
+    ras_mni_t = ras_mni_t['trans']
+    mni_ras_t = np.linalg.inv(ras_mni_t)
+    ras_coords = apply_trans(mni_ras_t, mni_coords)
+    
+    # Voxel to RAS to MNI
+    vox_ras_mni_t = np.dot(ras_mni_t, t1.affine)
+    mni_ras_vox_t = np.linalg.inv(vox_ras_mni_t)
+
+    VOXEL = apply_trans(mni_ras_vox_t, mni_coords)
+
+    vox_mri_t = t1.header.get_vox2ras_tkr()
+    freesurfer_mri = apply_trans(vox_mri_t, VOXEL)/1e3
+
+    return freesurfer_mri
+
+
 def source_to_MNI(subject, subjects_dir, t1, sources):
      # MNI to Native scanner RAS
 
@@ -255,8 +278,58 @@ def locate_seed(interest, sources_mni):
             return seed
 
 
+def anaymous():
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/10.txt'
+        '''
+        Get the seed location from each subject T1 Image
+        '''
+        # t1 = nib.load(t1_fname)
+        # vox_mri_t = t1.header.get_vox2ras_tkr()
+        # mri_vox_t = np.linalg.inv(vox_mri_t)
+        # sources = []
+        # for src_ in src:
+        #     points = src_['rr'][src_['inuse'].astype(bool)]
+        #     sources.append(apply_trans(mri_vox_t, points * 1e3))
+        #     sources = np.concatenate(sources, axis=0)
+        # sources_vox = np.round(sources)
+        # sources_mni = source_to_MNI(subject, subjects_dir, t1, sources_vox)
+        # sources_mni = np.round(sources_mni)
+
+        # interest_left_ac = ROI_mni['AC_Left']
+        # interest_right_ac = ROI_mni['AC_Right']
+        # interest_left_sc = ROI_mni['SSC_Left']
+        # interest_right_sc = ROI_mni['SSC_Right']
+        # interest_left_vc = ROI_mni['VC_Left']
+        # interest_right_vc = ROI_mni['VC_Right']
+
+        # seed_left_ac = locate_seed(interest_left_ac, sources_mni)
+        # seed_right_ac = locate_seed(interest_right_ac, sources_mni)
+        # seed_left_sc = locate_seed(interest_left_sc, sources_mni)
+        # seed_right_sc = locate_seed(interest_right_sc, sources_mni)
+        # seed_left_vc = locate_seed(interest_left_vc, sources_mni)
+        # seed_right_vc = locate_seed(interest_right_vc, sources_mni)
+
+        # print('\n')
+        # print(f'Left Auditory cortex seed index  {seed_left_ac}') if seed_left_ac != 0  else sys.exit()
+        # print(f'Right Auditory cortex seed index  {seed_right_ac}') if seed_right_ac != 0  else sys.exit()
+        # print(f'Left Somatosensory cortex seed index  {seed_left_sc}') if seed_left_sc != 0  else sys.exit()
+        # print(f'Right Somatosensory cortex seed index  {seed_right_sc}') if seed_right_sc != 0  else sys.exit()
+        # print(f'Left Visual cortex seed index  {seed_left_vc}') if seed_left_vc != 0  else sys.exit()
+        # print(f'Right Visual cortex seed index  {seed_right_vc}') if seed_right_vc != 0  else sys.exit()
+        # print('\n')
+
+        # seed_l = []; seed_l.append(seed_left_ac); seed_l.append(seed_left_sc); seed_l.append(seed_left_vc)
+        # seed_r = []; seed_r.append(seed_right_ac); seed_r.append(seed_right_sc); seed_r.append(seed_right_vc)
+
+        # seed_l_file = f'{DATA_DIR}/{subject}_seedleft_{volume_spacing}_{frequency}'
+        # seed_r_file = f'{DATA_DIR}/{subject}_seedright_{volume_spacing}_{frequency}'
+        # with open(seed_l_file, 'wb') as fpl:
+        #     pickle.dump(seed_l, fpl)
+        # with open(seed_r_file, 'wb') as fpr:
+        #     pickle.dump(seed_r, fpr)
+
+
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -287,37 +360,29 @@ ROI_mni = {
 
 freqs = {
         2: [0, 4],
+        3: [1, 5],
         4: [2, 6],
         6: [4, 8],
         8: [6, 10],
-        10: [8, 12],
         12: [10, 14],
-        14: [12, 16],
         16: [14, 18],
-        18: [16, 20],
-        20: [18, 22],
         24: [22, 26],
-        28: [26, 30],
         32: [30, 34],
-        42: [40, 44],
-        52: [50, 54],
+        48: [46, 50],
         64: [62, 66],
         96: [94, 98],
         128: [126, 130]
 }
-#fname_src_fsaverage = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/bem/fsaverage-vol-5-src.fif'
-#fname_src_fsaverage = '/home/senthil/Downloads/2932.fif.gz'
-#fname_t1_fsaverage = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/mri/brain.mgz'
+
 
 start_t = datetime.now()
-
 for key in freqs:
     frequency = str(key)
     print(f'Data filtered at frequency {frequency} Hz...')
     for case in case_list:
         subject = case
         space = 'volume'
-        volume_spacing = 5
+        volume_spacing = 7.8
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         bem_check = f'{subjects_dir}/{subject}/bem/'
         eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
@@ -325,17 +390,22 @@ for key in freqs:
         fname_meg = f'{DATA_DIR}/{subject}_ses-rest_task-rest.fif'
         t1_fname = os.path.join(subjects_dir, subject, 'mri', 'T1.mgz')
         heartbeat_proj = f'{DATA_DIR}/{subject}_heartbeat-proj.fif.gz'
-        fwd_fname = f'{DATA_DIR}/{subject}-fwd_{volume_spacing}.fif.gz'
-        src_fname = f'{DATA_DIR}/{subject}-src_{volume_spacing}.fif.gz'
+        fwd_fname = f'{DATA_DIR}/{subject}_{volume_spacing}-fwd.fif.gz'
+        src_fname = f'{DATA_DIR}/{subject}_{volume_spacing}-src.fif.gz'
         cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
         raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
         source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
-        corr_data_false_file_ac = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_ac.npy'
-        corr_data_true_file_ac = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_ac.npy'
-        corr_data_false_file_sc = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_sc.npy'
-        corr_data_true_file_sc = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_sc.npy'
-        corr_data_false_file_vc = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_vc.npy'
-        corr_data_true_file_vc = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vc.npy'
+        corr_data_false_file_ac_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_ac_wholebrain.npy'
+        corr_data_true_file_ac_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_ac_wholebrain.npy'
+        corr_data_false_file_sc_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_sc_wholebrain.npy'
+        corr_data_true_file_sc_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_sc_wholebrain.npy'
+        corr_data_false_file_vc_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_vc_wholebrain.npy'
+        corr_data_true_file_vc_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vc_wholebrain.npy'
+
+        coherence_file_sc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_sc.npy'
+        coherence_file_ac = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_ac.npy'
+        coherence_file_vc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_vc.npy'
+
         trans = f'/home/senthil/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
 
         #compute_bem(subject, subjects_dir)
@@ -346,6 +416,7 @@ for key in freqs:
         file_proj = pathlib.Path(raw_proj)
         file_cov = pathlib.Path(cov_fname)
         isdir_bem = pathlib.Path(bem_check)
+        t1 = nib.load(t1_fname)
 
         if not file_trans.exists():
             print (f'{trans} File doesnt exist...')
@@ -355,16 +426,53 @@ for key in freqs:
         # plot_registration(info, trans, subject, subjects_dir)
 
         if not file_ss.exists():
-            compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss=space, 
+            src = compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss=space, 
                                 volume_spacing=volume_spacing)
+            seed_l_sc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['SSC_Left'])
+            seed_r_sc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['SSC_Right'])
+            seed_l_ac = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['AC_Left'])
+            seed_r_ac = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['AC_Right'])
+            seed_l_vc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['VC_Left'])
+            seed_r_vc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['VC_Right'])
+            some = np.where(src[0]['inuse'] == 1)
+            loc_l_sc = some[0][0]
+            loc_r_sc = some[0][1]
+            loc_l_ac = some[0][2]
+            loc_r_ac = some[0][3]
+            loc_l_vc = some[0][4]
+            loc_r_vc = some[0][5]
+            src[0]['rr'][loc_l_sc] = seed_l_sc
+            src[0]['rr'][loc_r_sc] = seed_r_sc
+            src[0]['rr'][loc_l_ac] = seed_l_ac
+            src[0]['rr'][loc_r_ac] = seed_r_ac
+            src[0]['rr'][loc_l_vc] = seed_l_vc
+            src[0]['rr'][loc_r_vc] = seed_r_vc
+            src.save(src_fname, overwrite=True)
         src = mne.read_source_spaces(src_fname)
-        # view_SS_brain(subject, subjects_dir, src)
+        #view_SS_brain(subject, subjects_dir, src)
+
         if not file_fm.exists():
             forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
         fwd = mne.read_forward_solution(fwd_fname)
-        # sensitivty_plot(subject, subjects_dir, fwd)
 
+        # sensitivty_plot(subject, subjects_dir, fwd)
         raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
+        n_time_samps = raw.n_times
+        time_secs = raw.times
+        ch_names = raw.ch_names
+        n_chan = len(ch_names)
+        print('\n')
+        print('-------------------------- Data summary-------------------------------')
+        print(f'Subject {subject}')
+        print(f"The raw data object has {n_time_samps} time samples and {n_chan} channels.")
+        print(f"The last time sample at {time_secs[-1]} seconds.")
+        print(f"The first few channel names are {ch_names[:3]}")
+        print(f"Bad channels marked during data acquisition {raw.info['bads']}")
+        print(f"Sampling Frequency (No of time points/sec) {raw.info['sfreq']} Hz")
+        print(f"Miscellaneous acquisition info {raw.info['description']}")
+        print(f"Convert time in sec ( 60s ) to ingeter index {raw.time_as_index(60)}") # Convert time to indices
+        print('------------------------------------------------------------------------')
+        print('\n')
         # raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)
         if not file_proj.exists():
             projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
@@ -384,6 +492,9 @@ for key in freqs:
             raw.save(raw_proj, proj=True, overwrite=True)
         raw_proj_applied = mne.io.read_raw_fif(raw_proj, verbose='error', preload=True)
 
+        print(f'High-pass filtering data at 0.5 Hz')
+        raw_proj_applied.filter(l_freq=0.5, h_freq=None, method='iir')
+
         if not file_cov.exists():
             cov = mne.compute_raw_covariance(raw_proj_applied) # compute before band-pass of interest
             mne.write_cov(cov_fname, cov)
@@ -391,83 +502,75 @@ for key in freqs:
 
         # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
         # raw_proj_applied.crop(tmax=10)
-        raw_proj_applied.filter(l_freq=freqs[key][0], h_freq=freqs[key][1], n_jobs=16)
-        events = mne.make_fixed_length_events(raw_proj_applied, duration=5.)
-        epochs = mne.Epochs(raw_proj_applied, events=events, tmin=0, tmax=5.,
-                            baseline=None, preload=True)
-        # epochs = epochs.resample(5, npad='auto')
-        # plot_psd(epochs)
-        data_cov = mne.compute_covariance(epochs)
 
-        '''
-        Get the seed location from each subject T1 Image
-        '''
-        t1 = nib.load(t1_fname)
-        vox_mri_t = t1.header.get_vox2ras_tkr()
-        mri_vox_t = np.linalg.inv(vox_mri_t)
-        sources = []
-        for src_ in src:
-            points = src_['rr'][src_['inuse'].astype(bool)]
-            sources.append(apply_trans(mri_vox_t, points * 1e3))
-            sources = np.concatenate(sources, axis=0)
-        sources_vox = np.round(sources)
-        sources_mni = source_to_MNI(subject, subjects_dir, t1, sources_vox)
-        sources_mni = np.round(sources_mni)
+        do_epochs = False
+        do_filter = True
 
-        interest_left_ac = ROI_mni['AC_Left']
-        interest_right_ac = ROI_mni['AC_Right']
-        interest_left_sc = ROI_mni['SSC_Left']
-        interest_right_sc = ROI_mni['SSC_Right']
-        interest_left_vc = ROI_mni['VC_Left']
-        interest_right_vc = ROI_mni['VC_Right']
+        if do_filter:
+            raw_proj_filtered = raw_proj_applied.filter(l_freq=freqs[key][0], h_freq=freqs[key][1], n_jobs=16)
+            if do_epochs:
+                events = mne.make_fixed_length_events(raw_proj_filtered, duration=2.)
+                epochs = mne.Epochs(raw_proj_filtered, events=events,baseline=None, preload=True)
+                data_cov = mne.compute_covariance(epochs)
+            else:
+                data_cov = mne.compute_raw_covariance(raw_proj_filtered)
+        else:
+            data_cov = cov
+            raw_proj_filtered = raw_proj_applied
 
-        seed_left_ac = locate_seed(interest_left_ac, sources_mni)
-        seed_right_ac = locate_seed(interest_right_ac, sources_mni)
-        seed_left_sc = locate_seed(interest_left_sc, sources_mni)
-        seed_right_sc = locate_seed(interest_right_sc, sources_mni)
-        seed_left_vc = locate_seed(interest_left_vc, sources_mni)
-        seed_right_vc = locate_seed(interest_right_vc, sources_mni)
-
-        print(f'Left seed index Auditory cortex {seed_left_ac}') if seed_left_ac != 0  else sys.exit()
-        print(f'Right seed index Auditory cortex {seed_right_ac}') if seed_right_ac != 0  else sys.exit()
-        print(f'Left seed index Somatosensory cortex {seed_left_sc}') if seed_left_sc != 0  else sys.exit()
-        print(f'Right seed index Somatosensory cortex {seed_right_sc}') if seed_right_sc != 0  else sys.exit()
-        print(f'Left seed index Visual cortex {seed_left_vc}') if seed_left_vc != 0  else sys.exit()
-        print(f'Right seed index Visual cortex {seed_right_vc}') if seed_right_vc != 0  else sys.exit()
-
-        seed_l = []; seed_l.append(seed_left_ac); seed_l.append(seed_left_sc); seed_l.append(seed_left_vc)
-        seed_r = []; seed_r.append(seed_right_ac); seed_r.append(seed_right_sc); seed_r.append(seed_right_vc)
-
+        seed_left_sc = 0
+        seed_right_sc = 1
+        seed_left_ac = 2
+        seed_right_ac = 3
+        seed_left_vc = 4
+        seed_right_vc = 5
+        
         if space == 'volume':
-            filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
+
+            if do_epochs:
+                filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
                             pick_ori='max-power', weight_norm='nai')
-            epochs.apply_hilbert()
-            stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True)
+                epochs_complex = epochs.apply_hilbert()
+                stcs = apply_lcmv_epochs(epochs_complex, filters, verbose=True, return_generator=True)
+            else:
+                filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
+                                pick_ori='max-power', weight_norm='nai')
+                raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=16)
+                stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
+                stcs = [stcs]
                 
             # Power Envelope Correlation
-            corr_false = False
-            if corr_false:
-                print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize False')
-                corr_false = envelope_correlation(stcs, verbose=True, orthogonalize=False, seed=seed_l, n_jobs=20)
-                del stcs
-            else:
-                print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
-                
-                corr_true_ac = envelope_correlation(stcs, verbose=True, seed=seed_left_ac, n_jobs=18)
-                np.save(corr_data_true_file_ac, corr_true_ac[seed_right_ac])
-                print(f'Correlation between Left AC and Right AC: {corr_true_ac[seed_right_ac]}')
-
-                stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True) # Re-setting generator
-                corr_true_sc = envelope_correlation(stcs, verbose=True, seed=seed_left_sc, n_jobs=18)
-                np.save(corr_data_true_file_sc, corr_true_sc[seed_right_sc])
-                print(f'Correlation between Left SC and Right SC: {corr_true_sc[seed_right_sc]}')
-
-                stcs = apply_lcmv_epochs(epochs, filters, verbose=True, return_generator=True) # Re-setting generator
-                corr_true_vc = envelope_correlation(stcs, verbose=True, seed=seed_left_vc, n_jobs=18)
-                np.save(corr_data_true_file_vc, corr_true_vc[seed_right_vc])
-                print(f'Correlation between Left VC and Right VC: {corr_true_vc[seed_right_vc]}')
+            compute_correlation = True
+            if compute_correlation:
+                corr_false = False
+                if corr_false:
+                    print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize False')
+                    corr_false_sc = envelope_correlation(stcs, verbose=True, orthogonalize=False, seed=seed_left_sc, n_jobs=1)
+                    np.save(corr_data_false_file_sc_wholebrain, corr_false_sc)
+                    del stcs
+                else:
+                    print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
+                    
+                    corr_true_sc = envelope_correlation(stcs, verbose=True, seed=seed_left_sc, n_jobs=1)
+                    np.save(corr_data_true_file_sc_wholebrain, corr_true_sc)
+                    corr_true_ac = envelope_correlation(stcs, verbose=True, seed=seed_left_ac, n_jobs=1)
+                    np.save(corr_data_true_file_ac_wholebrain, corr_true_ac)
+                    corr_true_vc = envelope_correlation(stcs, verbose=True, seed=seed_left_vc, n_jobs=1)
+                    np.save(corr_data_true_file_vc_wholebrain, corr_true_vc)
                 
                 del stcs
+            
+            # Coherence
+            compute_coherence = False
+            if compute_coherence:
+                print(f'Computing coherence for {subject}....')
+
+                coh_sc = envelope_coherence(stcs, seed_l=seed_left_sc, seed_r=seed_right_sc, n_jobs=2)
+                np.save(coherence_file_sc, coh_sc)
+                coh_ac = envelope_coherence(stcs, seed_l=seed_left_ac, seed_r=seed_right_ac, n_jobs=2)
+                np.save(coherence_file_ac, coh_ac)
+                coh_vc = envelope_coherence(stcs, seed_l=seed_left_vc, seed_r=seed_right_vc, n_jobs=2)
+                np.save(coherence_file_vc, coh_vc)
 
     time_elapsed = datetime.now() - start_t
     print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))

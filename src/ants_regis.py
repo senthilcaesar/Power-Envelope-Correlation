@@ -23,9 +23,9 @@ def non_linear_registration(case, ortho='true'):
     '''
     
     subdir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
-    fsdir = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/mri'
-    bash_cmd = (f'antsRegistrationSyNQuick.sh -d 3 -f {fsdir}/brain.mgz -m {subdir}/{case}/mne_files/' \
-                f'{case}_corr_vol_{ortho}_5_no_morph_epoch.nii.gz -o {subdir}/{case}/mne_files/{case}_ants_orthoTrue_epoch -n 4')
+    fsaverage = '/home/senthil/caesar/camcan/cc700/freesurfer_output/fsaverage/mri'
+    bash_cmd = (f'antsRegistrationSyNQuick.sh -d 3 -f {fsaverage}/brain.mgz -m {subdir}/{case}/mne_files/' \
+                f'{case}_true_7.8_16_vc_corr.nii.gz -o {subdir}/{case}/mne_files/{case}_vc_ants -n 4')
     print(bash_cmd)
     subprocess.check_output(bash_cmd, shell=True)
 
