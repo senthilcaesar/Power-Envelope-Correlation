@@ -5,13 +5,13 @@ import numpy as np
 from itertools import product
 from mne.transforms import apply_trans
 import nibabel as nib
+import multiprocessing as mp
 from nilearn import plotting
 from scipy.signal import convolve2d
 
 
 def eight_neighbor_average_convolve2d(x):
 
-    print(f'Convolve two 2-dimensional array')
     kernel = np.ones((3, 3))
     kernel[1, 1] = 0
 
@@ -96,6 +96,20 @@ def neighbors(index):
             
             
 def miscelaneous():
+
+    '''
+    vertex indices ( every index value for vertices will
+    select a coordinate from lh_surf_coord )
+    
+    lh_data source data is mapped to lh_ver_idx which is then mapped to lh_surf_coord
+    
+    Each triangle lh_triangle_idx consist of 3 vertices
+    
+    src_space[0]['rr'] = The vertices of the source space
+    
+    
+    '''
+
     src_space_fname = '2932.fif.gz'
     src_space_fname = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/bem/fsaverage-vol-5-src.fif'
     t1_fname = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/mri/brain.mgz'
@@ -119,31 +133,12 @@ def miscelaneous():
     print(x,y,z)
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
-with open(cases) as f:
-     case_list = f.read().splitlines()
+def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
 
-spacing = 7.8
-freq = 2
-flag = 'true'
-sensor = ['sc', 'ac', 'vc']
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
-    
-for label in sensor:
-    for main_idx, case in enumerate(case_list):
-        subject = case
-        src_space_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{spacing}-src.fif.gz'
-        src_space = mne.read_source_spaces(src_space_fname)
-        lh_surf_coord = src_space[0]['rr']     					# Triangle Mesh coordinates
-        lh_triangle_idx = src_space[0]['tris'] 					# traingular mesh face of 3 vertices
-        corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_corr_ortho_{flag}_{spacing}_{freq}_{label}_wholebrain.npy'
-        stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_{label}_corr.nii.gz'
-        
-        '''
-        Source space is in Freesurfer MRI coordinates
-        '''
         sources = []
+        src_space = mne.read_source_spaces(src_space)
+        # lh_surf_coord = src_space[0]['rr']     					# Triangle Mesh coordinates
+        # lh_triangle_idx = src_space[0]['tris'] 					# traingular mesh face of 3 vertices
         t1_fname = os.path.join(subjects_dir, subject, 'mri', 'T1.mgz')
         t1 = nib.load(t1_fname)
         vox_mri_t = t1.header.get_vox2ras_tkr()
@@ -241,6 +236,7 @@ for label in sensor:
         
         convolution = True
         if convolution:
+            print(f'Convolve 2-dimensional array')
             final_list = [] # Axial
             for dim_0_slice in img:
                 output = eight_neighbor_average_convolve2d(dim_0_slice)
@@ -265,7 +261,7 @@ for label in sensor:
         affine = t1.affine
         hdr = t1.header
         result_img = nib.Nifti1Image(img, affine, header=hdr)
-        result_img.to_filename(stat_img)
+        result_img.to_filename(corr_vol)
         
         #Save the coorelation map to nifti image
         html = False
@@ -279,37 +275,34 @@ for label in sensor:
             html_view.save_as_html(output_html)
             html_view.open_in_browser()
 
-        some = nib.load(stat_img)
-        some.set_data_dtype('uint8')
-        some_data = some.get_fdata()
-        print(some_data.max(), img.max())
-        print(f'Case {main_idx} completed...')
+        print(corr_vol)
 
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
+subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+with open(cases) as f:
+     case_list = f.read().splitlines()
 
+spacing = 7.8
+freq = 3
+flag = 'true'
+sensor = ['sc', 'ac', 'vc']
+subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-  vertex indices ( every index value for vertices will
-  select a coordinate from lh_surf_coord )
- 
-  lh_data source data is mapped to lh_ver_idx which is then mapped to lh_surf_coord
- 
-  Each triangle lh_triangle_idx consist of 3 vertices
-  
-  src_space[0]['rr'] = The vertices of the source space
-  
- 
-'''
+for label in sensor:
+    subject_list, srcspace_list, corr_list, corr_vol = ([] for i in range(4))
+    for main_idx, case in enumerate(case_list):
+        subject = case
+        src_space_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{spacing}-src.fif.gz'
+        corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_corr_ortho_{flag}_{spacing}_{freq}_{label}_wholebrain.npy'
+        stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_{label}_corr.nii.gz'
+        subject_list.append(subject)
+        srcspace_list.append(src_space_fname)
+        corr_list.append(corr_file)
+        corr_vol.append(stat_img)
+    
+    pool = mp.Pool(processes=25)
+    manager = mp.Manager()
+    for i in range(len(subject_list)):
+        pool.apply_async(create_volume, args=[subjects_dir, subject_list[i], srcspace_list[i], corr_list[i], corr_vol[i]])
+    pool.close()
+    pool.join()
