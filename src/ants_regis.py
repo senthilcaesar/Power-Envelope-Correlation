@@ -2,8 +2,10 @@ import numpy as np
 import multiprocessing as mp
 import subprocess
 
+from scipy.signal.signaltools import _inputs_swap_needed
 
-def non_linear_registration(case, ortho='true'):
+
+def non_linear_registration(case, freq, sensor):
     '''
 
     Usage:
@@ -24,8 +26,21 @@ def non_linear_registration(case, ortho='true'):
     
     subdir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
     fsaverage = '/home/senthil/caesar/camcan/cc700/freesurfer_output/fsaverage/mri'
-    bash_cmd = (f'antsRegistrationSyNQuick.sh -d 3 -f {fsaverage}/brain.mgz -m {subdir}/{case}/mne_files/' \
-                f'{case}_true_7.8_16_vc_corr.nii.gz -o {subdir}/{case}/mne_files/{case}_vc_ants -n 4')
+    input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr.nii.gz'
+    output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_ants'
+    bash_cmd = f'antsRegistrationSyNQuick.sh -d 3 -f {fsaverage}/brain.mgz -m {input_file} -o {output_file} -n 4'
+    print(bash_cmd)
+    subprocess.check_output(bash_cmd, shell=True)
+
+
+def apply_transform(case, freq, sensor):
+    
+    subdir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+    fsaverage = '/home/senthil/caesar/camcan/cc700/freesurfer_output/fsaverage/mri'
+    input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr.nii.gz'
+    output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_antsWarped.nii.gz'
+    trans_file = f'{subdir}/{case}/mne_files/{case}_2_sc_ants0GenericAffine.mat'
+    bash_cmd =  f'antsApplyTransforms -d 3 -i {input_file} -r {fsaverage}/brain.mgz -o {output_file} --transform {trans_file}'
     print(bash_cmd)
     subprocess.check_output(bash_cmd, shell=True)
 
@@ -34,10 +49,11 @@ cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
-pool = mp.Pool(processes=10)
-manager = mp.Manager()
-data_vse = manager.list()
-for index, subject in enumerate(case_list):
-    pool.apply_async(non_linear_registration, args=[subject, 'true'])
-pool.close()
-pool.join()
+freq = 4
+sensor = ['sc', 'ac', 'vc']
+for label in sensor:
+    pool = mp.Pool(processes=10)
+    for index, subject in enumerate(case_list):
+        pool.apply_async(apply_transform, args=[subject, freq, label])
+    pool.close()
+    pool.join()

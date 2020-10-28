@@ -283,7 +283,7 @@ with open(cases) as f:
      case_list = f.read().splitlines()
 
 spacing = 7.8
-freq = 3
+freq = 4
 flag = 'true'
 sensor = ['sc', 'ac', 'vc']
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
@@ -301,7 +301,6 @@ for label in sensor:
         corr_vol.append(stat_img)
     
     pool = mp.Pool(processes=25)
-    manager = mp.Manager()
     for i in range(len(subject_list)):
         pool.apply_async(create_volume, args=[subjects_dir, subject_list[i], srcspace_list[i], corr_list[i], corr_vol[i]])
     pool.close()
