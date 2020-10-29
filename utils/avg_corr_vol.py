@@ -19,14 +19,13 @@ hdr = t1.header
 for freq in freqs:    
     for label in sensor:
         subjs_corr = np.zeros([256,256,256])
-        for case in case_list:
-            subject = case
+        for subject in case_list:
             DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
             corr_data_warp = f'{DATA_DIR}/{subject}_{freq}_{label}_antsWarped.nii.gz'
             data_npy = nib.load(corr_data_warp).get_fdata()
-            subjs_corr = np.add(subjs_corr, data_npy)
-        subjs_corr = np.divide(subjs_corr, len(case_list))
-        subjs_corr = np.multiply(subjs_corr, 1.73)
+            np.add(subjs_corr, data_npy, out=subjs_corr)
+        np.divide(subjs_corr, len(case_list), out=subjs_corr)
+        np.multiply(subjs_corr, 1.73, out=subjs_corr)
     
         output = f'{subjects_dir}/average/50_{flag}_{freq}_{label}.nii.gz'
         result_img = nib.Nifti1Image(subjs_corr, affine, header=hdr)

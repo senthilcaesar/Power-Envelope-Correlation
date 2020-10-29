@@ -182,7 +182,7 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             #----------------- AXIAL----------------------------------#
             pos_slice_axial = []
             for i, slice in enumerate(img):
-                if sum(map(sum, slice)) > 5.0:
+                if np.sum(slice) > 5.0:
                     pos_slice_axial.append(i)
             for i, pos in enumerate(pos_slice_axial):
                 if i+1 == len(pos_slice_axial):break
@@ -198,7 +198,7 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             img = np.swapaxes(img,0,1)
             pos_slice_coronal = []
             for i, slice in enumerate(img):
-                if sum(map(sum, slice)) > 5.0:
+                if np.sum(slice) > 5.0:
                     pos_slice_coronal.append(i)
             for i, pos in enumerate(pos_slice_coronal):
                 if i+1 == len(pos_slice_coronal): break
@@ -217,7 +217,7 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             img = np.swapaxes(img,0,2)
             pos_slice_sagittal = []
             for i, slice in enumerate(img):
-                if sum(map(sum, slice)) > 5.0:
+                if np.sum(slice) > 5.0:
                     pos_slice_sagittal.append(i)
             for i, pos in enumerate(pos_slice_sagittal):
                 if i+1 == len(pos_slice_sagittal): break
@@ -300,7 +300,7 @@ for label in sensor:
         corr_list.append(corr_file)
         corr_vol.append(stat_img)
     
-    pool = mp.Pool(processes=25)
+    pool = mp.Pool(processes=2)
     for i in range(len(subject_list)):
         pool.apply_async(create_volume, args=[subjects_dir, subject_list[i], srcspace_list[i], corr_list[i], corr_vol[i]])
     pool.close()
