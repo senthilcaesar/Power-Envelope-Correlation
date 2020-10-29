@@ -39,8 +39,9 @@ def apply_transform(case, freq, sensor):
     fsaverage = '/home/senthil/caesar/camcan/cc700/freesurfer_output/fsaverage/mri'
     input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr.nii.gz'
     output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_antsWarped.nii.gz'
-    trans_file = f'{subdir}/{case}/mne_files/{case}_2_sc_ants0GenericAffine.mat'
-    bash_cmd =  f'antsApplyTransforms -d 3 -i {input_file} -r {fsaverage}/brain.mgz -o {output_file} --transform {trans_file}'
+    trans_file1 = f'{subdir}/{case}/mne_files/{case}_2_sc_ants1Warp.nii.gz'
+    trans_file2 = f'{subdir}/{case}/mne_files/{case}_2_sc_ants0GenericAffine.mat'
+    bash_cmd =  f'antsApplyTransforms -d 3 -i {input_file} -r {fsaverage}/brain.mgz -o {output_file} -t {trans_file1} -t {trans_file2}'
     print(bash_cmd)
     subprocess.check_output(bash_cmd, shell=True)
 

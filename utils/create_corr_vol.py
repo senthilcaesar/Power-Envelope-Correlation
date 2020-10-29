@@ -249,7 +249,7 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
                 output = eight_neighbor_average_convolve2d(dim_0_slice)
                 final_list.append(output)
             img = np.dstack(final_list)
-            
+
             final_list = [] # Sagittal
             img = np.swapaxes(img,0,2)
             for dim_0_slice in img:
@@ -285,7 +285,7 @@ with open(cases) as f:
 spacing = 7.8
 freq = 4
 flag = 'true'
-sensor = ['sc', 'ac', 'vc']
+sensor = ['sc','ac','vc']
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 
 for label in sensor:

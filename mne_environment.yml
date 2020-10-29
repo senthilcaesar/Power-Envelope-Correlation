@@ -202,13 +202,17 @@ dependencies:
     - envisage==4.9.2
     - imageio-ffmpeg==0.4.2
     - lazy-object-proxy==1.4.3
+    - line-profiler==3.0.2
     - mayavi==4.7.2.dev0
     - mccabe==0.6.1
+    - memory-profiler==0.57.0
     - meshio==4.0.16
     - meson==0.55.1
     - mne==0.21.dev0
     - nibabel==3.1.1
     - nilearn==0.6.2
+    - opencv-python==4.4.0.44
+    - py-spy==0.3.3
     - pylint==2.5.3
     - pymatreader==0.0.23
     - pyqt5==5.15.0
@@ -219,6 +223,7 @@ dependencies:
     - pyvistaqt==0.1.1
     - scooby==0.5.6
     - sklearn==0.0
+    - snakeviz==2.1.0
     - sobol-seq==0.2.0
     - surfer==0.0.1
     - vtk==9.0.1
