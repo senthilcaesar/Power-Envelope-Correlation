@@ -7,7 +7,7 @@ cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 flag = 'true'
 sensor = ['sc', 'ac', 'vc']
-freqs = [2,3,4]
+freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 with open(cases) as f:
       case_list = f.read().splitlines()
 

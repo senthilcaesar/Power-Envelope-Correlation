@@ -34,14 +34,36 @@ def non_linear_registration(case, freq, sensor):
 
 
 def apply_transform(case, freq, sensor):
+
+    '''
+    antsApplyTransforms: Usage
+
+     -d, --dimensionality 2/3/4
+          This option forces the image to be treated as a specified-dimensional image. If 
+          not specified, antsWarp tries to infer the dimensionality from the input image. 
+
+     -i, --input inputFileName
+          Currently, the only input objects supported are image objects. However, the 
+          current framework allows for warping of other objects such as meshes and point 
+          sets. 
+
+     -r, --reference-image imageFileName
+          For warping input images, the reference image defines the spacing, origin, size, 
+          and direction of the output warped image. 
+
+     -o, --output warpedOutputFileName
+
+     -t, --transform transformFileName
+
+     '''
     
-    subdir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
-    fsaverage = '/home/senthil/caesar/camcan/cc700/freesurfer_output/fsaverage/mri'
+    subdir = f'/home/senthil/caesar/camcan/cc700/freesurfer_output'
+    fsaverage = f'{subdir}/fsaverage/mri'
     input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr.nii.gz'
     output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_antsWarped.nii.gz'
-    trans_file1 = f'{subdir}/{case}/mne_files/{case}_2_sc_ants1Warp.nii.gz'
-    trans_file2 = f'{subdir}/{case}/mne_files/{case}_2_sc_ants0GenericAffine.mat'
-    bash_cmd =  f'antsApplyTransforms -d 3 -i {input_file} -r {fsaverage}/brain.mgz -o {output_file} -t {trans_file1} -t {trans_file2}'
+    trans_file_warp = f'{subdir}/trans/{case}_ants1Warp.nii.gz'
+    trans_file_rigid = f'{subdir}/trans/{case}_ants0GenericAffine.mat'
+    bash_cmd =  f'antsApplyTransforms -d 3 -i {input_file} -r {fsaverage}/brain.mgz -o {output_file} -t {trans_file_warp} -t {trans_file_rigid}'
     print(bash_cmd)
     subprocess.check_output(bash_cmd, shell=True)
 
@@ -50,11 +72,12 @@ cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
-freq = 4
+freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 sensor = ['sc', 'ac', 'vc']
-for label in sensor:
-    pool = mp.Pool(processes=10)
-    for index, subject in enumerate(case_list):
-        pool.apply_async(apply_transform, args=[subject, freq, label])
-    pool.close()
-    pool.join()
+for freq in freqs:
+    for label in sensor:
+        pool = mp.Pool(processes=10)
+        for index, subject in enumerate(case_list):
+            pool.apply_async(apply_transform, args=[subject, freq, label])
+        pool.close()
+        pool.join()
