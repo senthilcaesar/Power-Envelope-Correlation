@@ -8,6 +8,7 @@ import nibabel as nib
 import multiprocessing as mp
 from nilearn import plotting
 from scipy.signal import convolve2d
+from settings import Settings
 
 
 def eight_neighbor_average_convolve2d(x):
@@ -277,32 +278,40 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
 
         print(corr_vol)
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
-with open(cases) as f:
-     case_list = f.read().splitlines()
 
-spacing = 7.8
-freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-flag = 'true'
-sensor = ['sc','ac','vc']
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+if __name__ == '__main__':
 
-for freq in freqs:
-    for label in sensor:
-        subject_list, srcspace_list, corr_list, corr_vol = ([] for i in range(4))
-        for main_idx, case in enumerate(case_list):
-            subject = case
-            src_space_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{spacing}-src.fif.gz'
-            corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_corr_ortho_{flag}_{spacing}_{freq}_{label}_wholebrain.npy'
-            stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_{label}_corr.nii.gz'
-            subject_list.append(subject)
-            srcspace_list.append(src_space_fname)
-            corr_list.append(corr_file)
-            corr_vol.append(stat_img)
-        
-        pool = mp.Pool(processes=25)
-        for i in range(len(subject_list)):
-            pool.apply_async(create_volume, args=[subjects_dir, subject_list[i], srcspace_list[i], corr_list[i], corr_vol[i]])
-        pool.close()
-        pool.join()
+    settings = Settings()
+
+    data_params = settings['DATA']
+    hyper_params = settings['PARAMS']
+    common_params = settings['COMMON']
+
+    cases = data_params['cases']
+    subjects_dir = common_params['subjects_dir']
+    spacing = hyper_params['vol_spacing']
+    freqs = hyper_params['freqs']
+    flag = hyper_params['ortho_flag']
+    sensor = hyper_params['sensor']
+
+    with open(cases) as f:
+        case_list = f.read().splitlines()
+
+    for freq in freqs:
+        for label in sensor:
+            subject_list, srcspace_list, corr_list, corr_vol = ([] for i in range(4))
+            for main_idx, case in enumerate(case_list):
+                subject = case
+                src_space_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{spacing}-src.fif.gz'
+                corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_corr_ortho_{flag}_{spacing}_{freq}_{label}_wholebrain.npy'
+                stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_{label}_corr.nii.gz'
+                subject_list.append(subject)
+                srcspace_list.append(src_space_fname)
+                corr_list.append(corr_file)
+                corr_vol.append(stat_img)
+            
+            pool = mp.Pool(processes=25)
+            for i in range(len(subject_list)):
+                pool.apply_async(create_volume, args=[subjects_dir, subject_list[i], srcspace_list[i], corr_list[i], corr_vol[i]])
+            pool.close()
+            pool.join()

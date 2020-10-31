@@ -1,7 +1,7 @@
 import numpy as np
 import multiprocessing as mp
 import subprocess
-
+from settings import Settings
 from scipy.signal.signaltools import _inputs_swap_needed
 
 
@@ -68,16 +68,28 @@ def apply_transform(case, freq, sensor):
     subprocess.check_output(bash_cmd, shell=True)
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
-with open(cases) as f:
-     case_list = f.read().splitlines()
+if __name__ == '__main__':
 
-freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-sensor = ['sc', 'ac', 'vc']
-for freq in freqs:
-    for label in sensor:
-        pool = mp.Pool(processes=10)
-        for index, subject in enumerate(case_list):
-            pool.apply_async(apply_transform, args=[subject, freq, label])
-        pool.close()
-        pool.join()
+    settings = Settings()
+
+    data_params = settings['DATA']
+    hyper_params = settings['PARAMS']
+    common_params = settings['COMMON']
+
+    cases = data_params['cases']
+    subjects_dir = common_params['subjects_dir']
+    spacing = hyper_params['vol_spacing']
+    freqs = hyper_params['freqs']
+    flag = hyper_params['ortho_flag']
+    sensor = hyper_params['sensor']
+
+
+    with open(cases) as f:
+        case_list = f.read().splitlines()
+    for freq in freqs:
+        for label in sensor:
+            pool = mp.Pool(processes=10)
+            for index, subject in enumerate(case_list):
+                pool.apply_async(apply_transform, args=[subject, freq, label])
+            pool.close()
+            pool.join()
