@@ -371,14 +371,14 @@ freqs = {
 }
 
 
+space = 'volume'
+volume_spacing = 7.8
+
 start_t = datetime.now()
 for key in freqs:
     frequency = str(key)
     print(f'Data filtered at frequency {frequency} Hz...')
-    for case in case_list:
-        subject = case
-        space = 'volume'
-        volume_spacing = 7.8
+    for subject in case_list:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         bem_check = f'{subjects_dir}/{subject}/bem/'
         eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'

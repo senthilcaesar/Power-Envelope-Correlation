@@ -266,11 +266,11 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
+space = 'volume'
+volume_spacing = 7.8
 
 start_t = datetime.now()
 for subject in case_list:
-    space = 'volume'
-    volume_spacing = 7.8
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     bem_check = f'{subjects_dir}/{subject}/bem/'
     eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
@@ -384,13 +384,8 @@ for subject in case_list:
     # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
     # raw_proj_applied.crop(tmax=10)
 
-    do_filter = False
-    if do_filter:
-        raw_proj_filtered = raw_proj_applied.filter(l_freq=freqs[key][0], h_freq=freqs[key][1], n_jobs=16)
-        data_cov = mne.compute_raw_covariance(raw_proj_filtered)
-    else:
-        data_cov = cov
-        raw_proj_filtered = raw_proj_applied
+    data_cov = cov
+    raw_proj_filtered = raw_proj_applied
 
     seed_left_sc = 0
     seed_right_sc = 1
@@ -414,7 +409,7 @@ for subject in case_list:
         np.save(coherence_file_ac, coh_ac)
         coh_vc = envelope_coherence(stcs, seed_l=seed_left_vc, seed_r=seed_right_vc, n_jobs=2)
         np.save(coherence_file_vc, coh_vc)
-        def stcs
+        del stcs
 
 time_elapsed = datetime.now() - start_t
 print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
