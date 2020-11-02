@@ -1,4 +1,5 @@
 import numpy as np
+import mne
 import multiprocessing as mp
 from multiprocessing import Semaphore
 from ..filter import next_fast_len

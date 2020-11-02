@@ -293,6 +293,7 @@ if __name__ == '__main__':
     freqs = hyper_params['freqs']
     flag = hyper_params['ortho_flag']
     sensor = hyper_params['sensor']
+    njobs = hyper_params['njobs']
 
     with open(cases) as f:
         case_list = f.read().splitlines()
@@ -310,7 +311,7 @@ if __name__ == '__main__':
                 corr_list.append(corr_file)
                 corr_vol.append(stat_img)
             
-            pool = mp.Pool(processes=25)
+            pool = mp.Pool(processes=njobs)
             for i in range(len(subject_list)):
                 pool.apply_async(create_volume, args=[subjects_dir, subject_list[i], srcspace_list[i], corr_list[i], corr_vol[i]])
             pool.close()

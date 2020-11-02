@@ -82,13 +82,14 @@ if __name__ == '__main__':
     freqs = hyper_params['freqs']
     flag = hyper_params['ortho_flag']
     sensor = hyper_params['sensor']
+    njobs = hyper_params['njobs']
 
 
     with open(cases) as f:
         case_list = f.read().splitlines()
     for freq in freqs:
         for label in sensor:
-            pool = mp.Pool(processes=10)
+            pool = mp.Pool(processes=njobs)
             for index, subject in enumerate(case_list):
                 pool.apply_async(apply_transform, args=[subject, freq, label])
             pool.close()

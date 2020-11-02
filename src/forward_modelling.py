@@ -329,7 +329,7 @@ def anaymous():
         #     pickle.dump(seed_r, fpr)
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/50.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/complete.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -359,18 +359,18 @@ ROI_mni = {
     }
 
 freqs = {
-        2: [0, 4],
-        3: [1, 5],
-        4: [2, 6],
-        6: [4, 8],
-        8: [6, 10],
-        12: [10, 14],
-        16: [14, 18],
-        24: [22, 26],
-        32: [30, 34],
-        48: [46, 50],
-        64: [62, 66],
-        96: [94, 98],
+       # 2: [0, 4],
+       # 3: [1, 5],
+       # 4: [2, 6],
+       # 6: [4, 8],
+       # 8: [6, 10],
+       # 12: [10, 14],
+       # 16: [14, 18],
+       # 24: [22, 26],
+       # 32: [30, 34],
+       # 48: [46, 50],
+       # 64: [62, 66],
+       # 96: [94, 98],
         128: [126, 130]
 }
 
@@ -502,18 +502,10 @@ for key in freqs:
 
         # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
         # raw_proj_applied.crop(tmax=10)
-
-        do_epochs = False
         do_filter = True
-
         if do_filter:
             raw_proj_filtered = raw_proj_applied.filter(l_freq=freqs[key][0], h_freq=freqs[key][1], n_jobs=16)
-            if do_epochs:
-                events = mne.make_fixed_length_events(raw_proj_filtered, duration=2.)
-                epochs = mne.Epochs(raw_proj_filtered, events=events,baseline=None, preload=True)
-                data_cov = mne.compute_covariance(epochs)
-            else:
-                data_cov = mne.compute_raw_covariance(raw_proj_filtered)
+            data_cov = mne.compute_raw_covariance(raw_proj_filtered)
         else:
             data_cov = cov
             raw_proj_filtered = raw_proj_applied
@@ -526,51 +518,28 @@ for key in freqs:
         seed_right_vc = 5
         
         if space == 'volume':
-
-            if do_epochs:
-                filters = make_lcmv(epochs.info, fwd, data_cov, 0.05, cov,
+            filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
                             pick_ori='max-power', weight_norm='nai')
-                epochs_complex = epochs.apply_hilbert()
-                stcs = apply_lcmv_epochs(epochs_complex, filters, verbose=True, return_generator=True)
-            else:
-                filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
-                                pick_ori='max-power', weight_norm='nai')
-                raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=16)
-                stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
-                stcs = [stcs]
-                
-            # Power Envelope Correlation
-            compute_correlation = True
-            if compute_correlation:
-                corr_false = False
-                if corr_false:
-                    print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize False')
-                    corr_false_sc = envelope_correlation(stcs, verbose=True, orthogonalize=False, seed=seed_left_sc, n_jobs=1)
-                    np.save(corr_data_false_file_sc_wholebrain, corr_false_sc)
-                    del stcs
-                else:
-                    print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
-                    
-                    corr_true_sc = envelope_correlation(stcs, verbose=True, seed=seed_left_sc, n_jobs=1)
-                    np.save(corr_data_true_file_sc_wholebrain, corr_true_sc)
-                    corr_true_ac = envelope_correlation(stcs, verbose=True, seed=seed_left_ac, n_jobs=1)
-                    np.save(corr_data_true_file_ac_wholebrain, corr_true_ac)
-                    corr_true_vc = envelope_correlation(stcs, verbose=True, seed=seed_left_vc, n_jobs=1)
-                    np.save(corr_data_true_file_vc_wholebrain, corr_true_vc)
-                
-                del stcs
+            raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=16)
+            stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
+            stcs = [stcs]
             
-            # Coherence
-            compute_coherence = False
-            if compute_coherence:
-                print(f'Computing coherence for {subject}....')
-
-                coh_sc = envelope_coherence(stcs, seed_l=seed_left_sc, seed_r=seed_right_sc, n_jobs=2)
-                np.save(coherence_file_sc, coh_sc)
-                coh_ac = envelope_coherence(stcs, seed_l=seed_left_ac, seed_r=seed_right_ac, n_jobs=2)
-                np.save(coherence_file_ac, coh_ac)
-                coh_vc = envelope_coherence(stcs, seed_l=seed_left_vc, seed_r=seed_right_vc, n_jobs=2)
-                np.save(coherence_file_vc, coh_vc)
+            # Power Envelope Correlation
+            corr_false = False
+            if corr_false:
+                print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize False')
+                corr_false_sc = envelope_correlation(stcs, verbose=True, orthogonalize=False, seed=seed_left_sc, n_jobs=1)
+                np.save(corr_data_false_file_sc_wholebrain, corr_false_sc)
+                del stcs
+            else:
+                print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
+                corr_true_sc = envelope_correlation(stcs, verbose=True, seed=seed_left_sc, n_jobs=1)
+                np.save(corr_data_true_file_sc_wholebrain, corr_true_sc)
+                corr_true_ac = envelope_correlation(stcs, verbose=True, seed=seed_left_ac, n_jobs=1)
+                np.save(corr_data_true_file_ac_wholebrain, corr_true_ac)
+                corr_true_vc = envelope_correlation(stcs, verbose=True, seed=seed_left_vc, n_jobs=1)
+                np.save(corr_data_true_file_vc_wholebrain, corr_true_vc)
+                del stcs
 
     time_elapsed = datetime.now() - start_t
     print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
