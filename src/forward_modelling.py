@@ -33,10 +33,6 @@ import matplotlib.pyplot as plt
 from surfer.utils import verbose
 os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
-import sys
-sys.path.insert(1, '/home/senthil/Downloads')
-from padding import symmetric_padding
-
 
 def compute_bem(subject, subjects_dir):
     mne.bem.make_watershed_bem(subject=subject, atlas=True, brainmask='ws.mgz',
