@@ -25,20 +25,20 @@ def timefn(fn):
     return measure_time
 
 
-def compute_coherence(epoch_data, corrs, seed_l, seed_r):
+def compute_coherence(se_data, corrs, seed_l, seed_r):
 
         '''
-        epoch_data == used adaptive linear spatial filtering (beamforming)
+        se_data == used adaptive linear spatial filtering (beamforming)
         to estimate the spectral amplitude and phase of neuronal signals at the source
         level   
 
         Example:
-        seed_l = Left somatosensory cortex signal data
-        seed_r = Right somatosensory cortex signal data
+        seed_l = Left somatosensory cortex source estimate data
+        seed_r = Right somatosensory cortex source estimate data
         '''
         padding = False
-        epoch_data = epoch_data.data[[seed_l,seed_r]].copy()
-        data_mag = np.abs(epoch_data)
+        se_data = se_data.data[[seed_l,seed_r]].copy()
+        data_mag = np.abs(se_data)
         
         if padding:
             x, y = data_mag.shape
@@ -92,14 +92,14 @@ def envelope_coherence(data, combine='mean',verbose=None, seed_l=None, seed_r=No
         
     if combine is not None:
         fun = _check_combine(combine, valid=('mean',))
-    else:  # None
+    else:
         fun = np.array
 
     pool = mp.Pool(processes=n_jobs)
     manager = mp.Manager()
     corrs = manager.list()
-    for ei, epoch_data in enumerate(data):
-        pool.apply_async(compute_coherence, args=[epoch_data, corrs, seed_l, seed_r])
+    for se_data in data:
+        pool.apply_async(compute_coherence, args=[se_data, corrs, seed_l, seed_r])
     pool.close()
     pool.join()
 
