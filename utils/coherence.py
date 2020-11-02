@@ -33,8 +33,8 @@ def compute_coherence(se_data, corrs, seed_l, seed_r):
         level   
 
         Example:
-        seed_l = Left somatosensory cortex source estimate data
-        seed_r = Right somatosensory cortex source estimate data
+        seed_l = Index of Left somatosensory cortex source estimate data
+        seed_r = Index of Right somatosensory cortex source estimate data
         '''
         padding = False
         se_data = se_data.data[[seed_l,seed_r]].copy()
