@@ -11,6 +11,7 @@ with open(cases) as f:
 
 freq = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr = [0, 0.04, 0.08, 0.12, 0.16]
+spacing=7.8
 sensory_mean = {'sc':None, 'ac':None, 'vc':None}
 fig, ax = plt.subplots(figsize=(5, 3))
 x_pnts = np.arange(len(freq))
@@ -21,8 +22,8 @@ for label in sensory_mean:
     for subject in case_list:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         for val in freq:
-            corr_data_file = f'{DATA_DIR}/{subject}_corr_ortho'\
-                            f'_{flag}_30_{val}_{label}_wholebrain.npy'
+            corr_data_file = f'{subjects_dir}/{subject}/mne_files/{subject}_'\
+                            f'corr_ortho_{flag}_{spacing}_{val}_{label}_wholebrain.npy'
             if Path(corr_data_file).exists():
                 if label == 'sc':
                     corr_data = float(np.load(corr_data_file)[1])*1.73

@@ -267,7 +267,7 @@ ROI_mni = {
     }
 
 space = 'volume'
-volume_spacing = 7.8
+volume_spacing = 30
 
 start_t = datetime.now()
 for subject in case_list:
