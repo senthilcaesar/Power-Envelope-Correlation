@@ -29,8 +29,8 @@ x_label = [0.032, 0.05, 0.1, 0.32, 1.0, 3.2, 10]
 y_label = [256, 128, 64, 32, 16, 8, 4]
 
 plt.imshow(mean_coh, aspect='auto', 
-            cmap='jet', interpolation='gaussian',
-            vmin=-0.5, vmax=0.5)
+            cmap='jet', interpolation='gaussian')
+            #vmin=-0.5, vmax=0.5)
 ax.set_xticklabels(x_label,fontsize=4)
 ax.set_yticklabels(y_label,fontsize=4)
 ax.set_xlabel('Co-variation frequency (Hz)', fontsize=6)

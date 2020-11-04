@@ -34,34 +34,6 @@ from surfer.utils import verbose
 os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
 
-def compute_bem(subject, subjects_dir):
-    mne.bem.make_watershed_bem(subject=subject, atlas=True, brainmask='ws.mgz',
-                              subjects_dir=subjects_dir, overwrite=True)
-
-
-def plot_bem(subject, subjects_dir):
-    mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir, 
-                 orientation='coronal')
-
-
-def compute_scalp_surfaces(subject, subjects_dir):
-    bashCommand = f'mne make_scalp_surfaces --overwrite -d {subjects_dir} -s {subject} --no-decimate --force'
-    subprocess.check_output(bashCommand, shell=True)
-
-
-def coregistration(subject, subjects_dir, trans):
-    mne.gui.coregistration(subject=subject, subjects_dir=subjects_dir)
-
-
-def plot_registration(info, trans, subject, subjects_dir):
-    fig = plot_alignment(info, trans, subject=subject, dig=True,
-                        meg=True, subjects_dir=subjects_dir,
-                        coord_frame='head')
-    set_3d_view(figure=fig, azimuth=135, elevation=80)
-    mlab.savefig('/home/senthil/Desktop/coreg.jpg')
-    Image(filename='/home/senthil/Desktop/coreg.jpg', width=500)
-    mlab.show()
-
 
 def view_SS_brain(subject, subjects_dir, src):
     brain = Brain(subject, 'lh', 'white', subjects_dir=subjects_dir)
@@ -325,7 +297,7 @@ def anaymous():
         #     pickle.dump(seed_r, fpr)
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/complete.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/1.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -355,18 +327,18 @@ ROI_mni = {
     }
 
 freqs = {
-       # 2: [0, 4],
-       # 3: [1, 5],
-       # 4: [2, 6],
-       # 6: [4, 8],
-       # 8: [6, 10],
-       # 12: [10, 14],
-       # 16: [14, 18],
-       # 24: [22, 26],
-       # 32: [30, 34],
-       # 48: [46, 50],
-       # 64: [62, 66],
-       # 96: [94, 98],
+       2: [0, 4],
+       3: [1, 5],
+       4: [2, 6],
+       6: [4, 8],
+       8: [6, 10],
+       12: [10, 14],
+       16: [14, 18],
+       24: [22, 26],
+       32: [30, 34],
+       48: [46, 50],
+       64: [62, 66],
+       96: [94, 98],
         128: [126, 130]
 }
 
@@ -398,14 +370,7 @@ for key in freqs:
         corr_data_false_file_vc_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_vc_wholebrain.npy'
         corr_data_true_file_vc_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vc_wholebrain.npy'
 
-        coherence_file_sc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_sc.npy'
-        coherence_file_ac = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_ac.npy'
-        coherence_file_vc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_vc.npy'
-
         trans = f'/home/senthil/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
-
-        #compute_bem(subject, subjects_dir)
-        #compute_scalp_surfaces(subject, subjects_dir)
         file_trans = pathlib.Path(trans)
         file_ss = pathlib.Path(src_fname)
         file_fm = pathlib.Path(fwd_fname)
@@ -416,7 +381,6 @@ for key in freqs:
 
         if not file_trans.exists():
             print (f'{trans} File doesnt exist...')
-            coregistration(subject, subjects_dir, trans)
 
         info = mne.io.read_info(fname_meg)
         # plot_registration(info, trans, subject, subjects_dir)
