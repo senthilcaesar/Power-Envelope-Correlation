@@ -1,13 +1,9 @@
-from operator import ne
-from pickle import NONE
 from re import VERBOSE
 import mne
 from mne.io import proj
 from mne.utils.docs import epo, stc
-from nibabel import freesurfer
 import numpy as np
 import os
-import sys
 from datetime import datetime 
 import os.path as op
 import subprocess
@@ -17,22 +13,17 @@ import multiprocessing as mp
 from multiprocessing import Manager
 from pathlib import Path
 from numpy.core.shape_base import block
-from surfer import Brain
-from IPython.display import Image
-from mayavi import mlab
 import subprocess
-import pickle
 import pathlib
-from mne.time_frequency import tfr_morlet
-from mne.viz import plot_alignment, set_3d_view
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
-from mne.connectivity import envelope_correlation, envelope_coherence
-from mne.beamformer import make_lcmv, apply_lcmv_epochs, apply_lcmv_raw
+from mne.connectivity import envelope_correlation
+from mne.beamformer import make_lcmv, apply_lcmv_raw
 from functools import wraps
 import matplotlib.pyplot as plt
 import time
-os.environ['ETS_TOOLKIT'] = 'qt4'
-os.environ['QT_API'] = 'pyqt'
+os.environ['ETS_TOOLKIT']='qt4'
+os.environ['QT_API']='pyqt'
+os.environ['QT_DEBUG_PLUGINS']='0'
 
 
 
@@ -61,7 +52,7 @@ ROI_mni = {
     }
 
 freqs = {
-       2: [0, 4],
+       #2: [0, 4],
        3: [1, 5],
        4: [2, 6],
        6: [4, 8],
@@ -91,7 +82,7 @@ def timefn(fn):
     return measure_time
 
 
-def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='surface', 
+def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=False, ss='volume', 
                         volume_spacing=10):
 
     src = None
@@ -182,9 +173,9 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
 
 
 def run_correlation(subjects_dir, subject, volume_spacing, key):
+
     frequency = str(key)
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
-    bem_check = f'{subjects_dir}/{subject}/bem/'
     eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
     eye_proj2 = f'{DATA_DIR}/{subject}_eyes2-proj.fif.gz'
     fname_meg = f'{DATA_DIR}/{subject}_ses-rest_task-rest.fif'
@@ -221,7 +212,6 @@ def run_correlation(subjects_dir, subject, volume_spacing, key):
     file_fm = pathlib.Path(fwd_fname)
     file_proj = pathlib.Path(raw_proj)
     file_cov = pathlib.Path(cov_fname)
-    isdir_bem = pathlib.Path(bem_check)
     t1 = nib.load(t1_fname)
 
     if not file_trans.exists():
@@ -371,6 +361,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, key):
 
     del stcs
 
+
 cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/age18to30.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
@@ -381,17 +372,12 @@ def main():
     volume_spacing = 7.8
     for key in freqs:
         print(f'Data filtered at frequency {str(key)} Hz...')
-        pool = mp.Pool(processes=3)
+        pool = mp.Pool(processes=2)
         for subject in case_list:
             pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, key])
         pool.close()
         pool.join()
 
 
-start_t = datetime.now()
-
 if __name__ == "__main__":
     main()
-
-time_elapsed = datetime.now() - start_t
-print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))

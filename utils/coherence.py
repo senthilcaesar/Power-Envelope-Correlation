@@ -24,7 +24,8 @@ def timefn(fn):
     return measure_time
 
 
-def compute_coherence(se_data, corrs, seed_l, seed_r):
+@timefn
+def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
 
         '''
         se_data == used adaptive linear spatial filtering (beamforming)
@@ -35,7 +36,6 @@ def compute_coherence(se_data, corrs, seed_l, seed_r):
         seed_l = Index of Left somatosensory cortex source estimate data
         seed_r = Index of Right somatosensory cortex source estimate data
         '''
-        padding = False
         se_data = se_data.data[[seed_l,seed_r]].copy()
         data_mag = np.abs(se_data)
     
@@ -58,14 +58,11 @@ def compute_coherence(se_data, corrs, seed_l, seed_r):
             spectral_estimate = cwt(data_mag, wvlt)
             spectral_estimate = spectral_estimate[:,0,:]
 
-            power_envelope = np.abs(spectral_estimate)
-            x, y = power_envelope.shape
-            power_envelope = power_envelope.reshape(1,x,y)
+            power_envelope = np.log(np.square(np.abs(spectral_estimate)))
+            power_envelope = power_envelope[np.newaxis,:,:]
 
             coherency, freqs, times, n_epochs, n_tapers = spectral_connectivity(
-                power_envelope, fskip=250, fmin=4, fmax=128, method='cohy',sfreq=sfreq, n_jobs=16)
-
-            np.save('/home/senthil/Downloads/freq.npy', freqs)
+                power_envelope, fmin=fmin, fmax=fmax, method='cohy',faverage=True, sfreq=sfreq, n_jobs=4)
             
             coherence_corr = np.real(coherency)
             coherence_corr = coherence_corr[1,:,:][0]
@@ -77,25 +74,4 @@ def compute_coherence(se_data, corrs, seed_l, seed_r):
         26 is the co-variation frequency (x-axis) [0.032 - 10]
         278 is the carrier freqeuncy (y-axis) [4 - 128]
         '''
-        corrs.append(coherence_correlation)
-
-
-@timefn
-def envelope_coherence(data, combine='mean',verbose=None, seed_l=None, seed_r=None, n_jobs=2):
-        
-    if combine is not None:
-        fun = _check_combine(combine, valid=('mean',))
-    else:
-        fun = np.array
-
-    pool = mp.Pool(processes=n_jobs)
-    manager = mp.Manager()
-    corrs = manager.list()
-    for se_data in data:
-        pool.apply_async(compute_coherence, args=[se_data, corrs, seed_l, seed_r])
-    pool.close()
-    pool.join()
-
-    corrs = list(corrs)
-    corr = fun(corrs)
-    return corr
+        return coherence_correlation

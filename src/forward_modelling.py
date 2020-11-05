@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt
 from surfer.utils import verbose
 os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
+os.environ['QT_DEBUG_PLUGINS']='0'
 
 
 def view_SS_brain(subject, subjects_dir, src):
