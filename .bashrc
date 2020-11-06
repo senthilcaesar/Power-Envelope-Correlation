@@ -46,3 +46,6 @@ alias fsleyes='~/fsl/bin/fsleyes > /dev/null 2>&1 &'
 conda activate mne
 alias mem='ps -o pid,user,%mem,command ax | sort -b -k3 -r'
 export ANTSPATH=/home/senthil/anaconda3/envs/mne/bin
+alias connect='cd /home/senthil/anaconda3/envs/mne/lib/python3.8/site-packages/mne/connectivity'
+alias matlab='/usr/local/bin/matlab 2>&1 &'
+alias watch='watch -n 1 free -g'

@@ -36,3 +36,6 @@ export FSLDIR PATH
 . ${FSLDIR}/etc/fslconf/fsl.sh
 export ANTSPATH=/home/senthil/anaconda3/envs/mne/bin
 alias fsleyes='~/fsl/bin/fsleyes > /dev/null 2>&1 &'
+alias connect='cd /home/senthil/anaconda3/envs/mne/lib/python3.8/site-packages/mne/connectivity'
+alias matlab='/usr/local/bin/matlab 2>&1 &'
+alias watch='watch -n 1 free -g'

@@ -70,8 +70,14 @@ def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
 
         coherence_correlation = np.vstack(covar_freq_list)
         '''
-        coherence_correlation.shape = (26,278)
+        coherence_correlation.shape = (26,21)
+        
         26 is the co-variation frequency (x-axis) [0.032 - 10]
-        278 is the carrier freqeuncy (y-axis) [4 - 128]
+        log_range = np.arange(-1.5,1.1,0.1)
+        covar_freqs = [math.pow(10,val) for val in log_range]
+        
+        21 is the carrier freqeuncy (y-axis) [4 - 128]
+        log_range = np.arange(2,7.25,0.25)
+        carrier_freqs = [math.pow(2,val) for val in log_range]
         '''
         return coherence_correlation

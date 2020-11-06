@@ -1,42 +1,25 @@
-from operator import ne
-from pickle import NONE
-from re import VERBOSE
 import mne
-from mne.io import proj
-from mne.utils.docs import epo, stc
-from nibabel import freesurfer
 import numpy as np
 import os
-import sys
 from datetime import datetime 
 import os.path as op
 import subprocess
 from mne.transforms import apply_trans
 import nibabel as nib
-import multiprocessing as mp
-from multiprocessing import Manager
 from pathlib import Path
-from numpy.core.shape_base import block
-from surfer import Brain
-from IPython.display import Image
-from mayavi import mlab
 import subprocess
-import pickle
 import pathlib
-from mne.time_frequency import tfr_morlet
-from mne.viz import plot_alignment, set_3d_view
+import math
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.connectivity import envelope_coherence
 from mne.beamformer import make_lcmv, apply_lcmv_raw
 import matplotlib.pyplot as plt
-from surfer.utils import verbose
 os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
 os.environ['QT_DEBUG_PLUGINS']='0'
 
 
-
-def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='surface', 
+def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='volume', 
                         volume_spacing=10):
 
     src = None
@@ -127,7 +110,7 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
 
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/age18to30.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/18to30.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -156,26 +139,15 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
-freqs = {
-    4: [2, 6],
-    6: [4, 8],
-    8: [6, 10],
-    12: [10, 14],
-    16: [14, 18],
-    24: [22, 26],
-    32: [30, 34],
-    48: [46, 50],
-    64: [62, 66],
-    96: [94, 98],
-    128: [126, 130]
-}
+log_range = np.arange(2,7.25,0.25)
+carrier_freqs = [math.pow(2,val) for val in log_range]
 
 space = 'volume'
 volume_spacing = 30
 
 start_t = datetime.now()
-for key in freqs:
-    frequency = str(key)
+for freq in carrier_freqs:
+    frequency = str(freq)
     for subject in case_list:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         bem_check = f'{subjects_dir}/{subject}/bem/'
@@ -189,11 +161,9 @@ for key in freqs:
         cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
         raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
         source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
-
         coherence_file_sc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_sc.npy'
         coherence_file_ac = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_ac.npy'
         coherence_file_vc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_vc.npy'
-
         trans = f'/home/senthil/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
 
         file_trans = pathlib.Path(trans)
@@ -287,8 +257,8 @@ for key in freqs:
         cov = mne.read_cov(cov_fname) 
 
         do_filter = True
-        l_freq=freqs[key][0]
-        h_freq=freqs[key][1]
+        l_freq = freq - 2.0
+        h_freq = freq + 2.0
         if do_filter:
             print(f'Band pass filter data [{l_freq}, {h_freq}]')
             raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq)

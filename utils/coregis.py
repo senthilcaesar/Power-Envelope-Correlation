@@ -1,12 +1,7 @@
 
 import mne
 import os
-import os.path as op
 import subprocess
-import nibabel as nib
-import multiprocessing as mp
-from pathlib import Path
-from surfer import Brain
 from IPython.display import Image
 from mayavi import mlab
 import pathlib
@@ -43,7 +38,7 @@ def plot_registration(info, trans, subject, subjects_dir):
     mlab.show()
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/age18to30.txt'
+cases = '/home/senthil/caesar/camcan/cc700/42to58.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 coregis_dir = '/home/senthil/caesar/camcan/cc700/camcan_coreg-master/trans'
 with open(cases) as f:

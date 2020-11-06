@@ -1,18 +1,13 @@
 from re import VERBOSE
 import mne
-from mne.io import proj
-from mne.utils.docs import epo, stc
 import numpy as np
 import os
-from datetime import datetime 
 import os.path as op
 import subprocess
 from mne.transforms import apply_trans
 import nibabel as nib
 import multiprocessing as mp
-from multiprocessing import Manager
 from pathlib import Path
-from numpy.core.shape_base import block
 import subprocess
 import pathlib
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
