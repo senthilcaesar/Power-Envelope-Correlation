@@ -27,7 +27,7 @@ def non_linear_registration(case, freq, sensor):
     subdir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
     fsaverage = '/home/senthil/caesar/camcan/cc700/freesurfer_output/fsaverage/mri'
     input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr.nii.gz'
-    output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_ants'
+    output_file = f'{subdir}/{case}/mne_files/{case}_ants'
     bash_cmd = f'antsRegistrationSyNQuick.sh -d 3 -f {fsaverage}/brain.mgz -m {input_file} -o {output_file} -n 4'
     print(bash_cmd)
     subprocess.check_output(bash_cmd, shell=True)
@@ -91,6 +91,7 @@ if __name__ == '__main__':
         for label in sensor:
             pool = mp.Pool(processes=njobs)
             for index, subject in enumerate(case_list):
-                pool.apply_async(apply_transform, args=[subject, freq, label])
+                pool.apply_async(non_linear_registration, args=[subject, freq, label])
+                #pool.apply_async(apply_transform, args=[subject, freq, label])
             pool.close()
             pool.join()

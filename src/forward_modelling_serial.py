@@ -298,7 +298,7 @@ def anaymous():
         #     pickle.dump(seed_r, fpr)
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/1.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/check.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -329,18 +329,18 @@ ROI_mni = {
 
 freqs = {
        2: [0, 4],
-       3: [1, 5],
-       4: [2, 6],
-       6: [4, 8],
-       8: [6, 10],
-       12: [10, 14],
-       16: [14, 18],
-       24: [22, 26],
-       32: [30, 34],
-       48: [46, 50],
-       64: [62, 66],
-       96: [94, 98],
-        128: [126, 130]
+      # 3: [1, 5],
+      # 4: [2, 6],
+      # 6: [4, 8],
+      # 8: [6, 10],
+      # 12: [10, 14],
+      # 16: [14, 18],
+      # 24: [22, 26],
+      # 32: [30, 34],
+      # 48: [46, 50],
+      # 64: [62, 66],
+      # 96: [94, 98],
+      #  128: [126, 130]
 }
 
 

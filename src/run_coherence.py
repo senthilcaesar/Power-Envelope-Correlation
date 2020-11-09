@@ -110,7 +110,7 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
 
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/18to30.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/62.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()

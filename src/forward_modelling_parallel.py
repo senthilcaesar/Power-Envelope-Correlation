@@ -47,7 +47,7 @@ ROI_mni = {
     }
 
 freqs = {
-       #2: [0, 4],
+       2: [0, 4],
        3: [1, 5],
        4: [2, 6],
        6: [4, 8],
@@ -357,7 +357,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, key):
     del stcs
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/age18to30.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/22.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()

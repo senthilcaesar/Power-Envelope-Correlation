@@ -149,9 +149,10 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             sources.append(apply_trans(mri_vox_t, points * 1e3))
             sources = np.concatenate(sources, axis=0)
         sources = np.round(sources)
-        
+       
         img = np.zeros([256,256,256])
         corr_data = np.load(corr_file)
+        print(len(sources), corr_data.shape)
         for idx, val in enumerate(sources):
             i, j, k = int(val[0]), int(val[1]), int(val[2])
             img[i][j][k] = corr_data[idx]
@@ -176,7 +177,6 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             for i,j,k in neighbor:
                 img[i][j][k] = img[a1][b1][c1]
                                     
-
         fill_slices = True
         if fill_slices:
             
@@ -303,7 +303,7 @@ if __name__ == '__main__':
             subject_list, srcspace_list, corr_list, corr_vol = ([] for i in range(4))
             for main_idx, case in enumerate(case_list):
                 subject = case
-                src_space_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{spacing}-src.fif.gz'
+                src_space_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{spacing}-fwd.fif.gz'
                 corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_corr_ortho_{flag}_{spacing}_{freq}_{label}_wholebrain.npy'
                 stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_{label}_corr.nii.gz'
                 subject_list.append(subject)

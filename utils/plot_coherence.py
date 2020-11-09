@@ -3,7 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import math
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/1.txt'
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/10.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -11,18 +11,18 @@ with open(cases) as f:
 log_range = np.arange(2,7.25,0.25)
 carrier_freqs = [math.pow(2,val) for val in log_range]
 
-sensory_mean = {'ac':None , 'sc':None, 'vc':None}
+sensory_mean = {'sc':None, 'ac':None, 'vc':None}
 
 space = 30
 covar_freq_list = []
-for freq in carrier_freqs[1:]:
+for freq in carrier_freqs:
     mean_coh = np.zeros([26, 1])
     for label in sensory_mean:
         for subject in case_list:
             DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
             corr_data_file = f'{DATA_DIR}/{subject}_coh_{space}_{freq}_{label}.npy'
             mean_coh = mean_coh + np.load(corr_data_file)
-    mean_coh = mean_coh / (len(case_list)*3)
+    mean_coh = mean_coh / (len(case_list)*len(sensory_mean))
     covar_freq_list.append(mean_coh)
     
 coherence_correlation = np.hstack(covar_freq_list)
