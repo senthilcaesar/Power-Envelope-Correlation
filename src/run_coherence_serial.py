@@ -192,13 +192,13 @@ for freq in carrier_freqs:
             seed_r_ac = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['AC_Right'])
             seed_l_vc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['VC_Left'])
             seed_r_vc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['VC_Right'])
-            some = np.where(src[0]['inuse'] == 1)
-            loc_l_sc = some[0][0]
-            loc_r_sc = some[0][1]
-            loc_l_ac = some[0][2]
-            loc_r_ac = some[0][3]
-            loc_l_vc = some[0][4]
-            loc_r_vc = some[0][5]
+            src_inuse = np.where(src[0]['inuse'] == 1)
+            loc_l_sc = src_inuse[0][0]
+            loc_r_sc = src_inuse[0][1]
+            loc_l_ac = src_inuse[0][2]
+            loc_r_ac = src_inuse[0][3]
+            loc_l_vc = src_inuse[0][4]
+            loc_r_vc = src_inuse[0][5]
             src[0]['rr'][loc_l_sc] = seed_l_sc
             src[0]['rr'][loc_r_sc] = seed_r_sc
             src[0]['rr'][loc_l_ac] = seed_l_ac
@@ -257,8 +257,8 @@ for freq in carrier_freqs:
         cov = mne.read_cov(cov_fname) 
 
         do_filter = True
-        l_freq = freq - 2.0
-        h_freq = freq + 2.0
+        l_freq = freq-2.0
+        h_freq = freq+2.0
         if do_filter:
             print(f'Band pass filter data [{l_freq}, {h_freq}]')
             raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq)

@@ -327,29 +327,15 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
-freqs = {
-       2: [0, 4],
-      # 3: [1, 5],
-      # 4: [2, 6],
-      # 6: [4, 8],
-      # 8: [6, 10],
-      # 12: [10, 14],
-      # 16: [14, 18],
-      # 24: [22, 26],
-      # 32: [30, 34],
-      # 48: [46, 50],
-      # 64: [62, 66],
-      # 96: [94, 98],
-      #  128: [126, 130]
-}
+freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 
 
 space = 'volume'
 volume_spacing = 7.8
 
 start_t = datetime.now()
-for key in freqs:
-    frequency = str(key)
+for freq in freqs:
+    frequency = str(freq)
     print(f'Data filtered at frequency {frequency} Hz...')
     for subject in case_list:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
@@ -395,13 +381,13 @@ for key in freqs:
             seed_r_ac = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['AC_Right'])
             seed_l_vc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['VC_Left'])
             seed_r_vc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['VC_Right'])
-            some = np.where(src[0]['inuse'] == 1)
-            loc_l_sc = some[0][0]
-            loc_r_sc = some[0][1]
-            loc_l_ac = some[0][2]
-            loc_r_ac = some[0][3]
-            loc_l_vc = some[0][4]
-            loc_r_vc = some[0][5]
+            src_inuse = np.where(src[0]['inuse'] == 1)
+            loc_l_sc = src_inuse[0][0]
+            loc_r_sc = src_inuse[0][1]
+            loc_l_ac = src_inuse[0][2]
+            loc_r_ac = src_inuse[0][3]
+            loc_l_vc = src_inuse[0][4]
+            loc_r_vc = src_inuse[0][5]
             src[0]['rr'][loc_l_sc] = seed_l_sc
             src[0]['rr'][loc_r_sc] = seed_r_sc
             src[0]['rr'][loc_l_ac] = seed_l_ac
@@ -439,7 +425,6 @@ for key in freqs:
             projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
             projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
             projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
-            print(subject)
             if projs_ecg is not None:
                 mne.write_proj(heartbeat_proj, projs_ecg) # Saving projectors
                 raw.info['projs'] += projs_ecg
@@ -465,7 +450,9 @@ for key in freqs:
         # raw_proj_applied.crop(tmax=10)
         do_filter = True
         if do_filter:
-            raw_proj_filtered = raw_proj_applied.filter(l_freq=freqs[key][0], h_freq=freqs[key][1], n_jobs=16)
+            l_freq = freq-2.0
+            h_freq = freq+2.0
+            raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq, n_jobs=16)
             data_cov = mne.compute_raw_covariance(raw_proj_filtered)
         else:
             data_cov = cov

@@ -1,4 +1,3 @@
-from re import VERBOSE
 import mne
 import numpy as np
 import os
@@ -6,21 +5,18 @@ import os.path as op
 import subprocess
 from mne.transforms import apply_trans
 import nibabel as nib
-import multiprocessing as mp
 from pathlib import Path
 import subprocess
 import pathlib
+import math
+import multiprocessing as mp
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
-from mne.connectivity import envelope_correlation
+from mne.connectivity import envelope_coherence
 from mne.beamformer import make_lcmv, apply_lcmv_raw
-from functools import wraps
 import matplotlib.pyplot as plt
-import time
-os.environ['ETS_TOOLKIT']='qt4'
-os.environ['QT_API']='pyqt'
+os.environ['ETS_TOOLKIT'] = 'qt4'
+os.environ['QT_API'] = 'pyqt'
 os.environ['QT_DEBUG_PLUGINS']='0'
-
-
 
 '''Bilateral sensory locations in MNI space'''
 ROI_mni = { 
@@ -46,24 +42,7 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
-freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-
-def convert(seconds): 
-    return time.strftime("%H:%M:%S", time.gmtime(seconds))
-
-
-def timefn(fn):
-    @wraps(fn)
-    def measure_time(*args, **kwargs):
-        t1 = time.time()
-        result = fn(*args, **kwargs)
-        t2 = time.time()
-        print (f'@timefn: {fn.__name__} took {convert(t2-t1)} (hh:mm:ss)')
-        return result
-    return measure_time
-
-
-def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=False, ss='volume', 
+def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='volume', 
                         volume_spacing=10):
 
     src = None
@@ -99,7 +78,7 @@ def forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname):
                             subjects_dir=subjects_dir)
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(fname_meg, trans=trans, src=src, bem=bem,
-                                    meg=True, eeg=False, mindist=5.06)
+                                    meg=True, eeg=False, mindist=5.0, n_jobs=16)
     # print(fwd)
     mne.write_forward_solution(fwd_fname, fwd, overwrite=True, verbose=None)
     #leadfield = fwd['sol']['data']
@@ -153,7 +132,7 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
     return sources_mni
 
 
-def run_correlation(subjects_dir, subject, volume_spacing, freq):
+def run_coherence(subjects_dir, subject, volume_spacing, freq):
 
     frequency = str(freq)
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
@@ -167,39 +146,25 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
     raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
     source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
+    coherence_file_sc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_sc.npy'
+    coherence_file_ac = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_ac.npy'
+    coherence_file_vc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_vc.npy'
+    trans = f'/home/senthil/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
 
-    corr_false_file_acLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_ac_wholebrain.npy'
-    corr_false_file_scLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_sc_wholebrain.npy'
-    corr_false_file_vcLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_vc_wholebrain.npy'
-    
-    corr_true_file_acLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_acLeft_wholebrain.npy'
-    corr_true_file_scLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_scLeft_wholebrain.npy'
-    corr_true_file_vcLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vcLeft_wholebrain.npy'
-
-    corr_true_file_acRight_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_acRight_wholebrain.npy'
-    corr_true_file_scRight_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_scRight_wholebrain.npy'
-    corr_true_file_vcRight_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vcRight_wholebrain.npy'
-
-    acLeft_file = pathlib.Path(corr_true_file_acLeft_wholebrain)
-    scLeft_file = pathlib.Path(corr_true_file_scLeft_wholebrain)
-    vcLeft_file = pathlib.Path(corr_true_file_vcLeft_wholebrain)
-    acRight_file = pathlib.Path(corr_true_file_acRight_wholebrain)
-    scRight_file = pathlib.Path(corr_true_file_scRight_wholebrain)
-    vcRight_file = pathlib.Path(corr_true_file_vcRight_wholebrain)
-
-    trans = f'/home/senthil/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' #The transformation file obtained by coregistration
     file_trans = pathlib.Path(trans)
     file_ss = pathlib.Path(src_fname)
     file_fm = pathlib.Path(fwd_fname)
     file_proj = pathlib.Path(raw_proj)
     file_cov = pathlib.Path(cov_fname)
+    file_sc = pathlib.Path(coherence_file_sc)
+    file_ac = pathlib.Path(coherence_file_ac)
+    file_vc = pathlib.Path(coherence_file_vc)
     t1 = nib.load(t1_fname)
 
     if not file_trans.exists():
         print (f'{trans} File doesnt exist...')
 
     if not file_ss.exists():
-        space = 'volume'
         src = compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss=space, 
                             volume_spacing=volume_spacing)
         seed_l_sc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['SSC_Left'])
@@ -245,11 +210,11 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     print(f"Convert time in sec ( 60s ) to ingeter index {raw.time_as_index(60)}") # Convert time to indices
     print('------------------------------------------------------------------------')
     print('\n')
-    # raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)
     if not file_proj.exists():
         projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
         projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
         projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
+        print(subject)
         if projs_ecg is not None:
             mne.write_proj(heartbeat_proj, projs_ecg) # Saving projectors
             raw.info['projs'] += projs_ecg
@@ -272,9 +237,9 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     cov = mne.read_cov(cov_fname) 
 
     do_filter = True
+    l_freq = freq-2.0
+    h_freq = freq+2.0
     if do_filter:
-        l_freq = freq-2.0
-        h_freq = freq+2.0
         print(f'Band pass filter data [{l_freq}, {h_freq}]')
         raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq)
         data_cov = mne.compute_raw_covariance(raw_proj_filtered)
@@ -288,73 +253,45 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     seed_right_ac = 3
     seed_left_vc = 4
     seed_right_vc = 5
-
+    
     filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
                     pick_ori='max-power', weight_norm='nai')
-    raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert()
+    raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=2)
     stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
 
-    print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
-    # Left seed to whole brain
-
-    if not scLeft_file.exists():
-        corr_true_scLeft = envelope_correlation(stcs, seed=seed_left_sc)
-        np.save(corr_true_file_scLeft_wholebrain, corr_true_scLeft)
-        del corr_true_scLeft
-    else:
-        print(f'File exsist {corr_true_file_scLeft_wholebrain}')
-    if not acLeft_file.exists():
-        corr_true_acLeft = envelope_correlation(stcs,seed=seed_left_ac)
-        np.save(corr_true_file_acLeft_wholebrain, corr_true_acLeft)
-        del corr_true_acLeft
-    else:
-        print(f'File exsist {corr_true_file_acLeft_wholebrain}')
-    if not vcLeft_file.exists():
-        corr_true_vcLeft = envelope_correlation(stcs,seed=seed_left_vc)
-        np.save(corr_true_file_vcLeft_wholebrain, corr_true_vcLeft)
-        del corr_true_vcLeft
-    else:
-        print(f'File exsist {corr_true_file_vcLeft_wholebrain}')
-
-    # Right seed to whole brain
-    if not scRight_file.exists():
-        corr_true_scRight = envelope_correlation(stcs,seed=seed_right_sc)
-        np.save(corr_true_file_scRight_wholebrain, corr_true_scRight)
-        del corr_true_scRight
-    else:
-        print(f'File exsist {corr_true_file_scRight_wholebrain}')
-    if not acRight_file.exists():
-        corr_true_acRight = envelope_correlation(stcs,seed=seed_right_ac)
-        np.save(corr_true_file_acRight_wholebrain, corr_true_acRight)
-        del corr_true_acRight
-    else:
-        print(f'File exsist {corr_true_file_acRight_wholebrain}')
-    if not vcRight_file.exists():
-        corr_true_vcRight = envelope_correlation(stcs,seed=seed_right_vc)
-        np.save(corr_true_file_vcRight_wholebrain, corr_true_vcRight)
-        del corr_true_vcRight
-    else:
-        print(f'File exsist {corr_true_file_vcRight_wholebrain}')
-
+    # Coherence
+    print(f'Computing coherence for {subject}....')
+    if not file_sc.exists():
+        coh_sc = envelope_coherence(stcs, seed_l=seed_left_sc, seed_r=seed_right_sc, fmin=l_freq, fmax=h_freq)
+        np.save(coherence_file_sc, coh_sc)
+        print(coherence_file_sc)
+    if not file_ac.exists():
+        coh_ac = envelope_coherence(stcs, seed_l=seed_left_ac, seed_r=seed_right_ac, fmin=l_freq, fmax=h_freq)
+        np.save(coherence_file_ac, coh_ac)
+        print(coherence_file_ac)
+    if not file_vc.exists():
+        coh_vc = envelope_coherence(stcs, seed_l=seed_left_vc, seed_r=seed_right_vc, fmin=l_freq, fmax=h_freq)
+        np.save(coherence_file_vc, coh_vc)
+        print(coherence_file_vc)
     del stcs
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/22.txt'
+log_range = np.arange(2,7.25,0.25)
+carrier_freqs = [math.pow(2,val) for val in log_range]
+cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/18to30.txt'
 subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
-@timefn
 def main():
-    volume_spacing = 7.8
-    for freq in freqs:
+    volume_spacing = 30
+    for freq in carrier_freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=2)
+        pool = mp.Pool(processes=3)
         for subject in case_list:
-            pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, freq])
+            pool.apply_async(run_coherence, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()
         pool.join()
-
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,4 @@
 import numpy as np
-import mne
-import multiprocessing as mp
-from ..utils import _check_combine
 from mne.connectivity import spectral_connectivity
 from mne.time_frequency import morlet
 from mne.time_frequency.tfr import cwt
@@ -37,7 +34,9 @@ def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
         seed_r = Index of Right somatosensory cortex source estimate data
         '''
         se_data = se_data.data[[seed_l,seed_r]].copy()
-        data_mag = np.abs(se_data)
+
+        # logarithm of the squared amplitude envelopes (power envelopes)
+        data_mag = np.log(np.square(np.abs(se_data)))
     
         log_range = np.arange(-1.5,1.1,0.1)
         covar_freqs = [math.pow(10,val) for val in log_range]
