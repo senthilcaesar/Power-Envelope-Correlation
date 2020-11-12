@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -20,7 +21,7 @@ for freq in carrier_freqs:
     for label in sensory_mean:
         for subject in case_list:
             DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
-            corr_data_file = f'{DATA_DIR}/{subject}_coh_{space}_{freq}_{label}_tmp.npy'
+            corr_data_file = f'{DATA_DIR}/{subject}_coh_{space}_{freq}_{label}.npy'
             mean_coh = mean_coh + np.load(corr_data_file)
     mean_coh = mean_coh / (len(case_list)*len(sensory_mean))
     covar_freq_list.append(mean_coh)
@@ -29,7 +30,7 @@ coherence_correlation = np.hstack(covar_freq_list)
 coherence_correlation = np.swapaxes(coherence_correlation, 0, 1)
 coherence_correlation = np.flip(coherence_correlation, 0)
 
-fig, ax = plt.subplots(figsize=(7, 3))
+fig, ax = plt.subplots(figsize=(6, 3))
 plt.imshow(coherence_correlation, aspect='auto', 
             cmap='jet', interpolation='gaussian') #vmin=-0.5, vmax=0.5)
 ax.set_xticks([0,5,10,15,20,25])
@@ -41,5 +42,9 @@ ax.yaxis.set_ticks_position('left')
 ax.grid(False)
 ax.set_xlabel('Co-variation frequency (Hz)', fontsize=6)
 ax.set_ylabel('Carrier frequency (Hz)', fontsize=6)
+ax.set_title(f'Correlation between homologous sensory '
+             f'areas as a function of the carrier frequency and  ' 
+             f'the co-variation frequency - 72 subjects, age (18-30)', fontsize=4)
 plt.colorbar()
-plt.savefig('/home/senthil/Desktop/covar_check1.png', dpi=600)
+plt.savefig('/home/senthil/Desktop/covar_72.png', dpi=600)
+# %%

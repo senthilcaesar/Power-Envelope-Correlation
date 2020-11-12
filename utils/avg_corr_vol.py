@@ -38,10 +38,9 @@ if __name__ == '__main__':
             np.divide(subjs_corr, len(case_list), out=subjs_corr)
             np.multiply(subjs_corr, 1.73, out=subjs_corr)
         
-            output = f'{subjects_dir}/average/50_{flag}_{freq}_{label}.nii.gz'
+            output = f'{subjects_dir}/average/{len(case_list)}_{flag}_{freq}_{label}.nii.gz'
             result_img = nib.Nifti1Image(subjs_corr, affine, header=hdr)
             result_img.to_filename(output)
             print(output)
             print(subjs_corr.max())
             print('\n')
-

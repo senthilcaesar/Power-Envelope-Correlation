@@ -213,20 +213,23 @@ for freq in carrier_freqs:
         fwd = mne.read_forward_solution(fwd_fname)
 
         raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
+        srate = raw.info['sfreq']
         n_time_samps = raw.n_times
         time_secs = raw.times
         ch_names = raw.ch_names
         n_chan = len(ch_names)
+        freq_res =  srate/n_time_samps
         print('\n')
         print('-------------------------- Data summary-------------------------------')
         print(f'Subject {subject}')
-        print(f"The raw data object has {n_time_samps} time samples and {n_chan} channels.")
-        print(f"The last time sample at {time_secs[-1]} seconds.")
+        print(f"Frequency resolution {freq_res} Hz")
         print(f"The first few channel names are {ch_names[:3]}")
-        print(f"Bad channels marked during data acquisition {raw.info['bads']}")
-        print(f"Sampling Frequency (No of time points/sec) {raw.info['sfreq']} Hz")
+        print(f"The last time sample at {time_secs[-1]} seconds.")
+        print(f"Sampling Frequency (No of time points/sec) {srate} Hz")
         print(f"Miscellaneous acquisition info {raw.info['description']}")
+        print(f"Bad channels marked during data acquisition {raw.info['bads']}")
         print(f"Convert time in sec ( 60s ) to ingeter index {raw.time_as_index(60)}") # Convert time to indices
+        print(f"The raw data object has {n_time_samps} time samples and {n_chan} channels.")
         print('------------------------------------------------------------------------')
         print('\n')
         # raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)

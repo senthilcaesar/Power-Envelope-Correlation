@@ -2,7 +2,6 @@ import numpy as np
 import multiprocessing as mp
 import subprocess
 from settings import Settings
-from scipy.signal.signaltools import _inputs_swap_needed
 
 
 def non_linear_registration(case, freq, sensor):
@@ -91,7 +90,7 @@ if __name__ == '__main__':
         for label in sensor:
             pool = mp.Pool(processes=njobs)
             for index, subject in enumerate(case_list):
-                pool.apply_async(non_linear_registration, args=[subject, freq, label])
-                #pool.apply_async(apply_transform, args=[subject, freq, label])
+                #pool.apply_async(non_linear_registration, args=[subject, freq, label])
+                pool.apply_async(apply_transform, args=[subject, freq, label])
             pool.close()
             pool.join()

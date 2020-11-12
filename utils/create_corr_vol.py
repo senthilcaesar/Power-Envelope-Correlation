@@ -152,7 +152,7 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
        
         img = np.zeros([256,256,256])
         corr_data = np.load(corr_file)
-        print(len(sources), corr_data.shape)
+        # print(len(sources), corr_data.shape)
         for idx, val in enumerate(sources):
             i, j, k = int(val[0]), int(val[1]), int(val[2])
             img[i][j][k] = corr_data[idx]

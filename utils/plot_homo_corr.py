@@ -74,4 +74,4 @@ ax.set_title(f'Correlation between orthogonalized '
              f'sensory areas - 72 subjects, age (18-30)', fontsize=4)
 ax.legend(fontsize=8)
 ax.grid(False)
-plt.savefig('/home/senthil/Desktop/correlation.png', dpi=600)
+plt.savefig('/home/senthil/Desktop/correlation_72.png', dpi=600)
