@@ -3,7 +3,7 @@ import subprocess
 from settings import Settings
 import multiprocessing as mp
 
-os.putenv("SUBJECTS_DIR", "/home/senthil/caesar/camcan/cc700/freesurfer_output")
+os.putenv("SUBJECTS_DIR", "/home/senthil/caesar/camcan/cc700/freesurfer_output/new")
 os.putenv("FREESURFER_HOME", "/usr/local/freesurfer")
 os.system("echo $SUBJECTS_DIR")
 os.system("echo $FREESURFER_HOME")
