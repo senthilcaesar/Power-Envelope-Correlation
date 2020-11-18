@@ -187,7 +187,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     scRight_file = pathlib.Path(corr_true_file_scRight_wholebrain)
     vcRight_file = pathlib.Path(corr_true_file_vcRight_wholebrain)
 
-    trans = f'/home/senthil/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' #The transformation file obtained by coregistration
+    trans = f'/home/senthilp/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' #The transformation file obtained by coregistration
     file_trans = pathlib.Path(trans)
     file_ss = pathlib.Path(src_fname)
     file_fm = pathlib.Path(fwd_fname)
@@ -342,8 +342,8 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     del stcs
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/22.txt'
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/22.txt'
+subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
 

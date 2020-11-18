@@ -21,7 +21,6 @@ from surfer import Brain
 from IPython.display import Image
 from mayavi import mlab
 import subprocess
-import pickle
 import pathlib
 from mne.time_frequency import tfr_morlet
 from mne.viz import plot_alignment, set_3d_view
@@ -30,7 +29,6 @@ from mne.connectivity import envelope_correlation, envelope_coherence
 from mne.beamformer import make_lcmv, apply_lcmv_epochs, apply_lcmv_raw
 from mne.minimum_norm import make_inverse_operator, apply_inverse_epochs
 import matplotlib.pyplot as plt
-from surfer.utils import verbose
 os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
 os.environ['QT_DEBUG_PLUGINS']='0'
@@ -298,8 +296,8 @@ def anaymous():
         #     pickle.dump(seed_r, fpr)
 
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/check.txt'
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/10.txt'
+subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
@@ -357,7 +355,7 @@ for freq in freqs:
         corr_data_false_file_vc_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_false_{volume_spacing}_{frequency}_vc_wholebrain.npy'
         corr_data_true_file_vc_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vc_wholebrain.npy'
 
-        trans = f'/home/senthil/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
+        trans = f'/home/senthilp/Downloads/tmp/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
         file_trans = pathlib.Path(trans)
         file_ss = pathlib.Path(src_fname)
         file_fm = pathlib.Path(fwd_fname)

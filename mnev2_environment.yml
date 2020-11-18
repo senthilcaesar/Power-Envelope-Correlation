@@ -1,9 +1,12 @@
 name: mnev2
 channels:
+  - anaconda
+  - pnlbwh
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
   - alabaster=0.7.12=py_0
+  - ants=2.3.0=py3
   - argh=0.26.2=py38_0
   - argon2-cffi=20.1.0=py38h7b6447c_1
   - astroid=2.4.2=py38_0
@@ -208,9 +211,9 @@ dependencies:
     - dipy==1.1.1
     - envisage==4.9.2
     - imageio-ffmpeg==0.4.2
-    - mayavi==4.7.2.dev0
+    - mayavi==4.7.2
     - meshio==4.1.0
-    - mne==0.21.dev0
+    - mne==0.21
     - neo==0.8.0
     - netneurotools==0.2.2
     - nibabel==3.1.1
