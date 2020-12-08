@@ -33,14 +33,14 @@ def plot_registration(info, trans, subject, subjects_dir):
                         meg=True, subjects_dir=subjects_dir,
                         coord_frame='head')
     set_3d_view(figure=fig, azimuth=135, elevation=80)
-    mlab.savefig('/home/senthil/Desktop/coreg.jpg')
-    Image(filename='/home/senthil/Desktop/coreg.jpg', width=500)
+    mlab.savefig('/home/senthilp/Desktop/coreg.jpg')
+    Image(filename='/home/senthilp/Desktop/coreg.jpg', width=500)
     mlab.show()
 
 
-cases = '/home/senthil/caesar/camcan/cc700/42to58.txt'
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
-coregis_dir = '/home/senthil/caesar/camcan/cc700/camcan_coreg-master/trans'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/68to88.txt'
+subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
+coregis_dir = '/home/senthilp/caesar/camcan/cc700/camcan_coreg-master/trans'
 with open(cases) as f:
      case_list = f.read().splitlines()
 

@@ -1,6 +1,11 @@
+from pickle import NONE
+from re import VERBOSE
 import mne
+from mne.io import proj
+from mne.utils.docs import epo, stc
 import numpy as np
 import os
+import sys
 from datetime import datetime 
 import os.path as op
 import subprocess
@@ -9,17 +14,16 @@ import nibabel as nib
 from pathlib import Path
 import subprocess
 import pathlib
-import math
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
-from mne.connectivity import envelope_coherence
-from mne.beamformer import make_lcmv, apply_lcmv_raw
+from mne.connectivity import envelope_coherence, plain_coherence
+from mne.beamformer import make_lcmv, apply_lcmv_epochs, apply_lcmv_raw
 import matplotlib.pyplot as plt
 os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
 os.environ['QT_DEBUG_PLUGINS']='0'
 
 
-def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='volume', 
+def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='surface', 
                         volume_spacing=10):
 
     src = None
@@ -109,9 +113,8 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
     return sources_mni
 
 
-
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/62.txt'
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to30.txt'
+subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
@@ -139,15 +142,17 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
-log_range = np.arange(2,7.25,0.25)
-carrier_freqs = [math.pow(2,val) for val in log_range]
+#freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+freqs = [1000]
+
 
 space = 'volume'
 volume_spacing = 30
 
 start_t = datetime.now()
-for freq in carrier_freqs:
+for freq in freqs:
     frequency = str(freq)
+    print(f'Data filtered at frequency {frequency} Hz...')
     for subject in case_list:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         bem_check = f'{subjects_dir}/{subject}/bem/'
@@ -161,27 +166,28 @@ for freq in carrier_freqs:
         cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
         raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
         source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
-        coherence_file_sc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_sc.npy'
-        coherence_file_ac = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_ac.npy'
-        coherence_file_vc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_vc.npy'
-        trans = f'/home/senthil/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
-
+        coherence_file_sc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_sc_signal.npy'
+        coherence_file_ac = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_ac_signal.npy'
+        coherence_file_vc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_vc_signal.npy'
+        trans = f'/home/senthilp/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
         file_trans = pathlib.Path(trans)
         file_ss = pathlib.Path(src_fname)
         file_fm = pathlib.Path(fwd_fname)
         file_proj = pathlib.Path(raw_proj)
         file_cov = pathlib.Path(cov_fname)
         isdir_bem = pathlib.Path(bem_check)
-
         file_sc = pathlib.Path(coherence_file_sc)
         file_ac = pathlib.Path(coherence_file_ac)
         file_vc = pathlib.Path(coherence_file_vc)
+
         t1 = nib.load(t1_fname)
 
         if not file_trans.exists():
             print (f'{trans} File doesnt exist...')
+            sys.exit(0)
 
         info = mne.io.read_info(fname_meg)
+        # plot_registration(info, trans, subject, subjects_dir)
 
         if not file_ss.exists():
             src = compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss=space, 
@@ -207,12 +213,15 @@ for freq in carrier_freqs:
             src[0]['rr'][loc_r_vc] = seed_r_vc
             src.save(src_fname, overwrite=True)
         src = mne.read_source_spaces(src_fname)
+        #view_SS_brain(subject, subjects_dir, src)
 
         if not file_fm.exists():
             forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
         fwd = mne.read_forward_solution(fwd_fname)
 
+        # sensitivty_plot(subject, subjects_dir, fwd)
         raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
+
         srate = raw.info['sfreq']
         n_time_samps = raw.n_times
         time_secs = raw.times
@@ -237,7 +246,6 @@ for freq in carrier_freqs:
             projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
             projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
             projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
-            print(subject)
             if projs_ecg is not None:
                 mne.write_proj(heartbeat_proj, projs_ecg) # Saving projectors
                 raw.info['projs'] += projs_ecg
@@ -258,17 +266,27 @@ for freq in carrier_freqs:
             cov = mne.compute_raw_covariance(raw_proj_applied) # compute before band-pass of interest
             mne.write_cov(cov_fname, cov)
         cov = mne.read_cov(cov_fname) 
-
-        do_filter = True
+        
         l_freq = freq-2.0
         h_freq = freq+2.0
+
+        do_filter = False
+        do_epochs = True
+
         if do_filter:
             print(f'Band pass filter data [{l_freq}, {h_freq}]')
             raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq)
-            data_cov = mne.compute_raw_covariance(raw_proj_filtered)
         else:
-            data_cov = cov
             raw_proj_filtered = raw_proj_applied
+
+        if do_epochs:
+            print('Segmenting raw data...')
+            events = mne.make_fixed_length_events(raw_proj_filtered, duration=5.)
+            raw_proj_filtered = mne.Epochs(raw_proj_filtered, events=events, tmin=0, tmax=5.,
+                                            baseline=None, preload=True)
+            data_cov = mne.compute_covariance(raw_proj_filtered)         
+        else:
+            data_cov = mne.compute_raw_covariance(raw_proj_filtered)
 
         seed_left_sc = 0
         seed_right_sc = 1
@@ -277,27 +295,47 @@ for freq in carrier_freqs:
         seed_left_vc = 4
         seed_right_vc = 5
         
-        if space == 'volume':
-            filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
-                            pick_ori='max-power', weight_norm='nai')
-            raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=6)
+        filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
+                        pick_ori='max-power', weight_norm='nai')
+        raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=8)
+
+        if do_epochs:
+            stcs = apply_lcmv_epochs(raw_proj_filtered_comp, filters, return_generator=False)
+        else:
             stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
+            stcs = [stcs]
+        
+        sc_epoch_signal = []
+        ac_epoch_signal = []
+        vc_epoch_signal = []
+        for se_epoch_data in stcs:
+            sc_sig = se_epoch_data.data[[seed_left_sc,seed_right_sc]]
+            ac_sig = se_epoch_data.data[[seed_left_ac,seed_right_ac]]
+            vc_sig = se_epoch_data.data[[seed_left_vc,seed_right_vc]]
+            sc_epoch_signal.append(sc_sig)
+            ac_epoch_signal.append(ac_sig)
+            vc_epoch_signal.append(vc_sig)
+        np.vstack(sc_epoch_signal)
+        np.vstack(ac_epoch_signal)
+        np.vstack(vc_epoch_signal)
+        sc_epoch_signal = np.real(sc_epoch_signal)
+        ac_epoch_signal = np.real(ac_epoch_signal)
+        vc_epoch_signal = np.real(vc_epoch_signal)
 
-            # Coherence
-            print(f'Computing coherence for {subject}....')
-            if not file_sc.exists():
-                coh_sc = envelope_coherence(stcs, seed_l=seed_left_sc, seed_r=seed_right_sc, fmin=l_freq, fmax=h_freq)
-                np.save(coherence_file_sc, coh_sc)
-                print(coherence_file_sc)
-            if not file_ac.exists():
-                coh_ac = envelope_coherence(stcs, seed_l=seed_left_ac, seed_r=seed_right_ac, fmin=l_freq, fmax=h_freq)
-                np.save(coherence_file_ac, coh_ac)
-                print(coherence_file_ac)
-            if not file_vc.exists():
-                coh_vc = envelope_coherence(stcs, seed_l=seed_left_vc, seed_r=seed_right_vc, fmin=l_freq, fmax=h_freq)
-                np.save(coherence_file_vc, coh_vc)
-                print(coherence_file_vc)
-            del stcs
+        print(f'Computing coherence for {subject}....')
+        if file_sc.exists():
+            coh_sc = plain_coherence(sc_epoch_signal)
+            np.save(coherence_file_sc, coh_sc)
+            print(coherence_file_sc)
+        if not file_ac.exists():
+            coh_ac = plain_coherence(ac_epoch_signal)
+            np.save(coherence_file_ac, coh_ac)
+            print(coherence_file_ac)
+        if not file_vc.exists():
+            coh_vc = plain_coherence(vc_epoch_signal)
+            np.save(coherence_file_vc, coh_vc)
+            print(coherence_file_vc)
+        del stcs
 
-time_elapsed = datetime.now() - start_t
-print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
+    time_elapsed = datetime.now() - start_t
+    print ('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))

@@ -4,15 +4,15 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import math
 
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/18to30.txt'
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to30.txt'
+subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
 log_range = np.arange(2,7.25,0.25)
 carrier_freqs = [math.pow(2,val) for val in log_range]
 
-sensory_mean = {'sc':None, 'ac':None, 'vc':None}
+sensory_mean = {'vc':None}#, 'ac':None, 'vc':None}
 
 space = 30
 covar_freq_list = []
@@ -46,5 +46,5 @@ ax.set_title(f'Correlation between homologous sensory '
              f'areas as a function of the carrier frequency and  ' 
              f'the co-variation frequency - 72 subjects, age (18-30)', fontsize=4)
 plt.colorbar()
-plt.savefig('/home/senthil/Desktop/covar_72.png', dpi=600)
+plt.savefig('/home/senthilp/Desktop/covar_72.png', dpi=600)
 # %%

@@ -64,7 +64,7 @@ def compute_correlation(epoch_data, corrs, seed, orthogonalize):
 
 @timefn
 def envelope_correlation(data, combine='mean', orthogonalize="pairwise",
-                         verbose=None, seed=None, n_jobs=1):
+                         verbose=None, seed=None, n_jobs=10):
 
 
     _check_option('orthogonalize', orthogonalize, (False, 'pairwise'))
@@ -78,7 +78,7 @@ def envelope_correlation(data, combine='mean', orthogonalize="pairwise",
     pool = mp.Pool(processes=n_jobs)
     manager = mp.Manager()
     corrs = manager.list()
-    for ei, epoch_data in enumerate(data):
+    for epoch_data in data:
         pool.apply_async(compute_correlation, args=[epoch_data, corrs, seed, orthogonalize])
     pool.close()
     pool.join()

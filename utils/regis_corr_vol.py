@@ -23,8 +23,8 @@ def non_linear_registration(case, freq, sensor):
 
     '''
     
-    subdir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
-    fsaverage = '/home/senthil/caesar/camcan/cc700/freesurfer_output/fsaverage/mri'
+    subdir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
+    fsaverage = '/home/senthilp/freesurfer/subjects/fsaverage/mri'
     input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr.nii.gz'
     output_file = f'{subdir}/{case}/mne_files/{case}_ants'
     bash_cmd = f'antsRegistrationSyNQuick.sh -d 3 -f {fsaverage}/brain.mgz -m {input_file} -o {output_file} -n 4'
@@ -56,8 +56,8 @@ def apply_transform(case, freq, sensor):
 
      '''
     
-    subdir = f'/home/senthil/caesar/camcan/cc700/freesurfer_output'
-    fsaverage = f'{subdir}/fsaverage/mri'
+    subdir = f'/home/senthilp/caesar/camcan/cc700/freesurfer_output'
+    fsaverage = f'/home/senthilp/freesurfer/subjects/fsaverage/mri'
     input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr.nii.gz'
     output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_antsWarped.nii.gz'
     trans_file_warp = f'{subdir}/trans/{case}_ants1Warp.nii.gz'
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     sensor = hyper_params['sensor']
     njobs = hyper_params['njobs']
 
-
+    
     with open(cases) as f:
         case_list = f.read().splitlines()
     for freq in freqs:

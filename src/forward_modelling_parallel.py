@@ -12,7 +12,7 @@ import subprocess
 import pathlib
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.connectivity import envelope_correlation
-from mne.beamformer import make_lcmv, apply_lcmv_raw
+from mne.beamformer import make_lcmv, apply_lcmv_raw, apply_lcmv_epochs
 from functools import wraps
 import matplotlib.pyplot as plt
 import time
@@ -275,12 +275,20 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     cov = mne.read_cov(cov_fname) 
 
     do_filter = True
+    do_epochs = True
     if do_filter:
         l_freq = freq-2.0
         h_freq = freq+2.0
         print(f'Band pass filter data [{l_freq}, {h_freq}]')
         raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq)
-        data_cov = mne.compute_raw_covariance(raw_proj_filtered)
+        if do_epochs:
+            print('Segmenting raw data...')
+            events = mne.make_fixed_length_events(raw_proj_filtered, duration=5.)
+            raw_proj_filtered = mne.Epochs(raw_proj_filtered, events=events, tmin=0, tmax=5.,
+                        baseline=None, preload=True)
+            data_cov = mne.compute_covariance(raw_proj_filtered)         
+        else:
+            data_cov = mne.compute_raw_covariance(raw_proj_filtered)
     else:
         data_cov = cov
         raw_proj_filtered = raw_proj_applied
@@ -295,7 +303,12 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
                     pick_ori='max-power', weight_norm='nai')
     raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert()
-    stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
+
+    if do_epochs:
+        stcs = apply_lcmv_epochs(raw_proj_filtered_comp, filters, return_generator=True)
+    else:
+        stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
+        stcs = [stcs]
 
     print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
     # Left seed to whole brain

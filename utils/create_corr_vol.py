@@ -33,11 +33,11 @@ def test_cv(img):
     img = np.swapaxes(img,0,2)
     import cv2
     for i in range(0,len(img)):
-        cv2.imwrite("/home/senthil/Desktop/pics/"+str(i)+".png",img[i]*255.0)
+        cv2.imwrite("/home/senthilp/Desktop/pics/"+str(i)+".png",img[i]*255.0)
         
 
 def create_label():
-    label_name = '/home/senthil/Downloads/tmp/sub-CC221373/nilearn_files/label.mgz'
+    label_name = '/home/senthilp/Downloads/tmp/sub-CC221373/nilearn_files/label.mgz'
     label_mri = np.zeros([256,256,256])
     label_mri[104][98][122] = 4
     affine = t1.affine
@@ -60,7 +60,7 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
      # MNI to Native scanner RAS
      
     #subject='fsaverage'
-    #subjects_dir='/home/senthil/mne_data/MNE-sample-data/subjects'
+    #subjects_dir='/home/senthilp/mne_data/MNE-sample-data/subjects'
     ras_mni_t = mne.transforms.read_ras_mni_t(subject, subjects_dir)
     ras_mni_t = ras_mni_t['trans']
     
@@ -74,7 +74,7 @@ def MNI_to_RASandVoxel(subject, subjects_dir, t1, mni_coords):
     # MNI to Native scanner RAS
     
     #subject='fsaverage'
-    #subjects_dir='/home/senthil/mne_data/MNE-sample-data/subjects'
+    #subjects_dir='/home/senthilp/mne_data/MNE-sample-data/subjects'
     
     ras_mni_t = mne.transforms.read_ras_mni_t(subject, subjects_dir)
     ras_mni_t = ras_mni_t['trans']
@@ -112,8 +112,8 @@ def miscelaneous():
     '''
 
     src_space_fname = '2932.fif.gz'
-    src_space_fname = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/bem/fsaverage-vol-5-src.fif'
-    t1_fname = '/home/senthil/mne_data/MNE-sample-data/subjects/fsaverage/mri/brain.mgz'
+    src_space_fname = '/home/senthilp/mne_data/MNE-sample-data/subjects/fsaverage/bem/fsaverage-vol-5-src.fif'
+    t1_fname = '/home/senthilp/mne_data/MNE-sample-data/subjects/fsaverage/mri/brain.mgz'
 
     sources_mni = source_to_MNI(subject, subjects_dir, t1, sources)
     sources_mni = np.round(sources_mni)
@@ -176,14 +176,20 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             neighbor = list(neighbors((a1, b1, c1)))
             for i,j,k in neighbor:
                 img[i][j][k] = img[a1][b1][c1]
+
+        found = np.argwhere(img > 0.0)
+        for a1,b1,c1 in found:
+            neighbor = list(neighbors((a1, b1, c1)))
+            for i,j,k in neighbor:
+                img[i][j][k] = img[a1][b1][c1]
                                     
-        fill_slices = True
+        fill_slices = False
         if fill_slices:
             
             #----------------- AXIAL----------------------------------#
             pos_slice_axial = []
             for i, slice in enumerate(img):
-                if np.sum(slice) > 5.0:
+                if np.sum(slice) > 15.0:
                     pos_slice_axial.append(i)
             for i, pos in enumerate(pos_slice_axial):
                 if i+1 == len(pos_slice_axial):break
@@ -199,7 +205,7 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             img = np.swapaxes(img,0,1)
             pos_slice_coronal = []
             for i, slice in enumerate(img):
-                if np.sum(slice) > 5.0:
+                if np.sum(slice) > 15.0:
                     pos_slice_coronal.append(i)
             for i, pos in enumerate(pos_slice_coronal):
                 if i+1 == len(pos_slice_coronal): break
@@ -218,7 +224,7 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             img = np.swapaxes(img,0,2)
             pos_slice_sagittal = []
             for i, slice in enumerate(img):
-                if np.sum(slice) > 5.0:
+                if np.sum(slice) > 15.0:
                     pos_slice_sagittal.append(i)
             for i, pos in enumerate(pos_slice_sagittal):
                 if i+1 == len(pos_slice_sagittal): break
