@@ -1,0 +1,21 @@
+[user]
+	name = senthilcaesar@yahoo.co.in
+	email = senthilcaesar@gmail.com
+	password = sonyxperia
+[core]
+	editor = vim
+	autocrlf = input
+[help]
+	format = web
+[diff]
+	tool = vimdiff
+[merge]
+	tool = vimdiff
+	conflictstyle = diff3
+[difftool]
+	prompt = false
+[alias]
+	hist = log --pretty=format:\"%h ( %ad %an ) %s %d\" --graph --date=short --name-only
+	globallist = config --global --list
+[credential]
+	helper = cache

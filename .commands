@@ -1,0 +1,2 @@
+grep -Fvf file2 file1
+nohup 2>&1 python forward_modelling.py &

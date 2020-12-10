@@ -1,0 +1,255 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+First, you need to assume root privilege 
+
+sudo bash   (enter password)
+
+or login on console as root if you have the password.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To begin with, on a CentOS 7 system, install ClamAV using 'yum'
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[root@math ~]# yum -y install clamav
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Next, you need to run the 'freshclam' command to update/install the virus
+databases.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[root@math ~]# freshclam
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+For testing purposes, I downloaded a file with a text string in it which
+is meant to trigger any AV program that is working properly.
+
+https://www.eicar.org/?page_id=3950
+
+And the specific download on the page is linked.
+I downloaded this file to the /root directory as follows:
+
+wget http://www.eicar.org/download/eicar.com.txt
+
+which retrieves and drops this file into the /root directory.
+
+Now I can point clamscan at the /root folder and see what it finds.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+[root@math ~]# clamscan /root
+/root/.bash_logout: OK
+/root/.bash_profile: OK
+/root/.bashrc: OK
+/root/.cshrc: OK
+/root/.tcshrc: OK
+/root/anaconda-ks.cfg: OK
+/root/initial-setup-ks.cfg: OK
+/root/.history: OK
+/root/.lesshst: OK
+/root/_hist: OK
+LibClamAV Warning: cli_scanxz: decompress file size exceeds limits - only scanning 27262976 bytes
+1/root/sosreport-newmath-983624849-2018-12-07-zgadpus.tar.xz: OK
+/root/.ICEauthority: OK
+/root/.esd_auth: OK
+/root/.bash_history: OK
+/root/.Xauthority: Empty file
+/root/rstudio-1.1.463-x86_64.rpm: OK
+/root/.rnd: OK
+/root/.gitconfig: OK
+/root/eicar.com.txt: Win.Test.EICAR_HDB-1 FOUND
+
+----------- SCAN SUMMARY -----------
+Known viruses: 6999351
+Engine version: 0.102.2
+Scanned directories: 1
+Scanned files: 18
+Infected files: 1
+Data scanned: 11.38 MB
+Data read: 101.84 MB (ratio 0.11:1)
+Time: 16.103 sec (0 m 16 s)
+[root@math ~]#
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+So it found it, but also issued a complaint about scanning a file that
+was relatively large, which I can see as follows:
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[root@math ~]# ls -als
+total 104368
+    4 dr-xr-x---. 26 root  root           4096 May 20 20:32 .
+    4 dr-xr-xr-x. 40 root  root           4096 Aug 19  2019 ..
+    4 -rw-------.  1 root  root           2641 Dec  4  2018 anaconda-ks.cfg
+   12 -rw-------   1 root  root          11482 Sep  6  2019 .bash_history
+    4 -rw-r--r--.  1 root  root             18 Dec 28  2013 .bash_logout
+    4 -rw-r--r--.  1 root  root            176 Dec 28  2013 .bash_profile
+    4 -rw-r--r--.  1 root  root            543 Jun 10  2019 .bashrc
+    0 drwx------. 14 root  root            288 Apr 11  2019 .cache
+    0 drwx------. 14 root  root            283 Dec 10  2018 .config
+    0 drwxr-xr-x   6 root  root             95 Jun 10  2019 .cpan
+    4 -rw-r--r--.  1 root  root            100 Dec 28  2013 .cshrc
+    0 drwx------.  3 root  root             25 Dec  4  2018 .dbus
+    0 drwxr-xr-x   2 root  root              6 Dec 10  2018 Desktop
+    0 drwxr-xr-x   2 root  root              6 Dec 10  2018 Documents
+    0 drwxr-xr-x   2 root  root              6 Dec 10  2018 Downloads
+    4 -rw-------   1 root  root             68 May 20 20:32 eicar.com.txt
+    0 drwx------.  3 root  root             28 Dec  4  2018 .emacs.d
+    4 -rw-------   1 root  root             16 Dec 10  2018 .esd_auth
+    4 -rw-r--r--   1 root  root             25 Jan 22 15:11 .gitconfig
+    0 drwx------   2 root  root             60 Dec  7  2018 .gnupg
+    0 drwx------   2 root  root              6 Apr 11  2019 .gvfs
+   28 -rw-r--r--   1 root  root          25254 Jan 30  2019 _hist
+    4 -rw-------.  1 root  root           3463 May 19 12:22 .history
+    4 -rw-------   1 root  root           1256 Dec 10  2018 .ICEauthority
+    4 -rw-r--r--.  1 root  root           2689 Dec  4  2018 initial-setup-ks.cfg
+    0 drwxr-xr-x   3 root  root             19 Oct 15  2019 .java
+    0 drwx------   3 root  root             81 Dec 10  2018 .kde
+    4 -rw-------.  1 root  root             72 Jan 29  2019 .lesshst
+    0 drwxr-xr-x.  3 root  root             19 Dec  4  2018 .local
+    0 drwxr-xr-x   2 root  root              6 Dec 10  2018 Music
+    0 drwxr-xr-x.  5 root  root             39 Jun 10  2019 perl5
+    0 drwxr-xr-x   2 root  root              6 Dec 10  2018 Pictures
+    0 drwxr-----   3 root  root             19 Dec  5  2018 .pki
+    0 drwxr-xr-x   2 root  root              6 Dec 10  2018 Public
+    4 -rw-------   1 root  root           1024 Aug 27  2019 .rnd
+92776 -rw-------   1 tkohl math-staff 95000084 Feb  2  2019 rstudio-1.1.463-x86_64.rpm
+    0 drwx------   9 root  root             99 Oct 15  2019 .sage
+11488 -rw-------   1 root  root       11760072 Dec  7  2018 sosreport-newmath-983624849-2018-12-07-zgadpus.tar.xz
+    0 drwx------.  2 root  root             25 Dec  4  2018 .ssh
+    0 drwxr-xr-x   3 root  root             19 Dec  7  2018 .systemtap
+    0 drwxr-xr-x   2 root  root             57 Dec  7  2018 .targetcli
+    4 -rw-r--r--.  1 root  root            129 Dec 28  2013 .tcshrc
+    0 drwxr-xr-x   2 root  root              6 Dec 10  2018 Templates
+    0 drwxr-xr-x   2 root  root              6 Dec 10  2018 Videos
+    0 -rw-------   1 root  root              0 Dec 10  2018 .Xauthority
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+So the 99 Megabyte 'rpm' file is tripping up the scanner, so I can
+up the size file it will scan:
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[root@math ~]# clamscan --max-filesize=100M /root
+/root/.bash_logout: OK
+/root/.bash_profile: OK
+/root/.bashrc: OK
+/root/.cshrc: OK
+/root/.tcshrc: OK
+/root/anaconda-ks.cfg: OK
+/root/initial-setup-ks.cfg: OK
+/root/.history: OK
+/root/.lesshst: OK
+/root/_hist: OK
+/root/sosreport-newmath-983624849-2018-12-07-zgadpus.tar.xz: OK
+/root/.ICEauthority: OK
+/root/.esd_auth: OK
+/root/.bash_history: OK
+/root/.Xauthority: Empty file
+/root/rstudio-1.1.463-x86_64.rpm: OK
+/root/.rnd: OK
+/root/.gitconfig: OK
+/root/eicar.com.txt: Win.Test.EICAR_HDB-1 FOUND
+
+----------- SCAN SUMMARY -----------
+Known viruses: 6999351
+Engine version: 0.102.2
+Scanned directories: 1
+Scanned files: 18
+Infected files: 1
+Data scanned: 284.07 MB
+Data read: 101.84 MB (ratio 2.79:1)
+Time: 31.420 sec (0 m 31 s)
+[root@math ~]#
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+And let's not forget, that it did find the virus string in 
+'eichar.com.txt' file which it flags as 'FOUND'.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Now, there is a quarantine feature which we can enable.
+If I designate /tmp/Q as a quarantine directory, then can
+be used as quarantine containers are used in any other AV
+software.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[root@math ~]# mkdir /tmp/Q
+[root@math ~]# clamscan --max-filesize=100M -r --move=/tmp/Q /root
+
+/root/eicar.com.txt: Win.Test.EICAR_HDB-1 FOUND
+/root/eicar.com.txt: moved to '/tmp/Q/eicar.com.txt'
+
+----------- SCAN SUMMARY -----------
+Known viruses: 6999351
+Engine version: 0.102.2
+Scanned directories: 416
+Scanned files: 592
+Infected files: 1
+Data scanned: 484.93 MB
+Data read: 197.51 MB (ratio 2.46:1)
+Time: 47.029 sec (0 m 47 s)
+
+[root@math ~]# ls -als /tmp/Q
+total 8
+0 drwxr-xr-x   2 root root   27 May 20 20:39 .
+4 drwxrwxrwt. 31 root root 4096 May 20 20:39 ..
+4 -rw-------   1 root root   68 May 20 20:32 eicar.com.txt
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Also, I can simply (and most importantly) have ClamAV remove the
+offending item:
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[root@math ~]# clamscan -r --remove /tmp/Q
+/tmp/Q/eicar.com.txt: Win.Test.EICAR_HDB-1 FOUND
+/tmp/Q/eicar.com.txt: Removed.
+
+----------- SCAN SUMMARY -----------
+Known viruses: 6999351
+Engine version: 0.102.2
+Scanned directories: 1
+Scanned files: 1
+Infected files: 1
+Data scanned: 0.00 MB
+Data read: 0.00 MB (ratio 0.00:1)
+Time: 14.734 sec (0 m 14 s)
+
+[root@math ~]# ls -als /tmp/Q
+total 4
+0 drwxr-xr-x   2 root root    6 May 20 20:49 .
+4 drwxrwxrwt. 31 root root 4096 May 20 20:39 ..
+
+-------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Note, also that we can have ClamAV only show (and quartine)
+only infected files, to avoid a lot of on-screen clutter.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[root@math ~]# cp ~tkohl/eicar.com.txt /root/
+[root@math ~]# clamscan -i --max-filesize=100M -r --move=/tmp/Q /root
+/root/eicar.com.txt: Win.Test.EICAR_HDB-1 FOUND
+/root/eicar.com.txt: moved to '/tmp/Q/eicar.com.txt'
+
+----------- SCAN SUMMARY -----------
+Known viruses: 6999351
+Engine version: 0.102.2
+Scanned directories: 416
+Scanned files: 592
+Infected files: 1
+Data scanned: 484.93 MB
+Data read: 197.51 MB (ratio 2.46:1)
+Time: 46.311 sec (0 m 46 s)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
