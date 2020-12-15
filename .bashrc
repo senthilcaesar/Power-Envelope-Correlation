@@ -48,3 +48,5 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
+# rsync -av senthilp@155.41.46.25:/home/senthilp/caesar/camcan .
+
