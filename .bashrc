@@ -13,9 +13,9 @@ export PATH
 # Uncomment the following line if you don't like systemctl's auto-paging feature:
 # export SYSTEMD_PAGER=
 
-export QT_DEBUG_PLUGINS=1
-export QT_PLUGIN_PATH=/home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/PyQt5/Qt/plugins
-export LD_LIBRARY_PATH=/home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/PyQt5/Qt/plugins
+#export QT_DEBUG_PLUGINS=1
+#export QT_PLUGIN_PATH=/home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/PyQt5/Qt/plugins
+#export LD_LIBRARY_PATH=/home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/PyQt5/Qt/plugins
 alias spyder='/home/senthilp/anaconda3/envs/mnev2/bin/spyder > /dev/null 2>&1 &'
 alias spss='/home/senthilp/IBM/SPSS/Statistics/26/bin/stats 2>&1 &'
 alias gpu1='lspci -v -s 08:00.0'
@@ -48,5 +48,11 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
-# rsync -av senthilp@155.41.46.25:/home/senthilp/caesar/camcan .
+# Git branch in prompt version 2
+parse_git_branch() {
+git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
 
+conda activate mnev2
+alias cpu='lscpu | grep -e Socket -e Core -e Thread'
+alias smi='nvidia-smi'

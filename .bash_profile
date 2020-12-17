@@ -8,9 +8,9 @@ fi
 # User specific environment and startup programs
 export PATH=~/anaconda3/bin:$PATH
 source /home/senthilp/anaconda3/bin/activate
-export QT_DEBUG_PLUGINS=1
-export QT_PLUGIN_PATH=/home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/PyQt5/Qt/plugins
-export LD_LIBRARY_PATH=/home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/PyQt5/Qt/plugins
+#export QT_DEBUG_PLUGINS=1
+#export QT_PLUGIN_PATH=/home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/PyQt5/Qt/plugins
+#export LD_LIBRARY_PATH=/home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/PyQt5/Qt/plugins
 
 # Git branch in prompt version 2
 parse_git_branch() {
@@ -38,3 +38,6 @@ alias fsleyes='~/fsl/bin/fsleyes > /dev/null 2>&1 &'
 alias connect='cd /home/senthilp/anaconda3/envs/mnev2/lib/python3.8/site-packages/mne/connectivity'
 alias matlab='/usr/local/bin/matlab 2>&1 &'
 alias watch='watch -n 1 free -g'
+conda activate mnev2
+alias cpu='lscpu | grep -e Socket -e Core -e Thread'
+alias smi='nvidia-smi'

@@ -33,6 +33,12 @@ os.environ['ETS_TOOLKIT'] = 'qt4'
 os.environ['QT_API'] = 'pyqt'
 os.environ['QT_DEBUG_PLUGINS']='0'
 
+os.environ["OMP_NUM_THREADS"] = "40"         # export OMP_NUM_THREADS=1
+os.environ["OPENBLAS_NUM_THREADS"] = "40"    # export OPENBLAS_NUM_THREADS=1
+os.environ["MKL_NUM_THREADS"] = "40"         # export MKL_NUM_THREADS=1
+os.environ["VECLIB_MAXIMUM_THREADS"] = "40"  # export VECLIB_MAXIMUM_THREADS=1
+os.environ["NUMEXPR_NUM_THREADS"] = "40"     # export NUMEXPR_NUM_THREADS=1
+
 
 def view_SS_brain(subject, subjects_dir, src):
     brain = Brain(subject, 'lh', 'white', subjects_dir=subjects_dir)
@@ -296,7 +302,7 @@ def anaymous():
         #     pickle.dump(seed_r, fpr)
 
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/68to88.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/1.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -325,7 +331,7 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
-freqs = [4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+freqs = [4] #, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 #freqs = np.linspace(80,500,16)
 
 
@@ -347,6 +353,7 @@ for freq in freqs:
         fwd_fname = f'{DATA_DIR}/{subject}_{volume_spacing}-fwd.fif.gz'
         src_fname = f'{DATA_DIR}/{subject}_{volume_spacing}-src.fif.gz'
         cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
+        raw_cov_fname = f'{DATA_DIR}/{subject}-rawcov_{volume_spacing}.fif.gz'
         raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
         source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
         corr_true_file_acLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_acLeft_wholebrain.npy'
@@ -368,8 +375,11 @@ for freq in freqs:
         file_exist = [f for f in check_for_files if os.path.isfile(f)]
         file_not_exist = list(set(file_exist) ^ set(check_for_files))
 
-        if len(file_not_exist) > 1:
+        print(file_exist)
+        if not file_not_exist: 
+            print('SC, AC, VC correlation files exists...')
 
+        else:
             trans = f'/home/senthilp/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
             file_trans = pathlib.Path(trans)
             file_ss = pathlib.Path(src_fname)
@@ -377,6 +387,7 @@ for freq in freqs:
             file_proj = pathlib.Path(raw_proj)
             file_cov = pathlib.Path(cov_fname)
             isdir_bem = pathlib.Path(bem_check)
+            file_rawcov = pathlib.Path(raw_cov_fname)
 
             acLeft_file = pathlib.Path(corr_true_file_acLeft_wholebrain)
             scLeft_file = pathlib.Path(corr_true_file_scLeft_wholebrain)
@@ -489,7 +500,11 @@ for freq in freqs:
                                                 baseline=None, preload=True)
                 data_cov = mne.compute_covariance(raw_proj_filtered)         
             else:
-                data_cov = mne.compute_raw_covariance(raw_proj_filtered)
+                if not file_rawcov.exists():
+                    data_cov = mne.compute_raw_covariance(raw_proj_filtered)
+                    mne.write_cov(raw_cov_fname, data_cov)
+                else:
+                    data_cov = mne.read_cov(file_rawcov)
 
 
             seed_left_sc = 0
@@ -502,56 +517,28 @@ for freq in freqs:
 
             filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
                             pick_ori='max-power', weight_norm='nai')
-            raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=8)
+            raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=2)
 
             if do_epochs:
                 stcs = apply_lcmv_epochs(raw_proj_filtered_comp, filters, return_generator=False)
             else:
                 stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
                 stcs = [stcs]
-            
             # Power Envelope Correlation
             print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
-        
-            # Left seed to whole brain
-            if not scLeft_file.exists():
-                corr_true_scLeft = envelope_correlation(stcs, seed=seed_left_sc)
-                np.save(corr_true_file_scLeft_wholebrain, corr_true_scLeft)
-                del corr_true_scLeft
-            else:
-            print(f'File exsist {corr_true_file_scLeft_wholebrain}')
-            if not acLeft_file.exists():
-                corr_true_acLeft = envelope_correlation(stcs,seed=seed_left_ac)
-                np.save(corr_true_file_acLeft_wholebrain, corr_true_acLeft)
-                del corr_true_acLeft
-            else:
-                print(f'File exsist {corr_true_file_acLeft_wholebrain}')
-            if not vcLeft_file.exists():
-                corr_true_vcLeft = envelope_correlation(stcs,seed=seed_left_vc)
-                np.save(corr_true_file_vcLeft_wholebrain, corr_true_vcLeft)
-                del corr_true_vcLeft
-            else:
-                print(f'File exsist {corr_true_file_vcLeft_wholebrain}')
 
-            # Right seed to whole brain
-            if not scRight_file.exists():
-                corr_true_scRight = envelope_correlation(stcs,seed=seed_right_sc)
-                np.save(corr_true_file_scRight_wholebrain, corr_true_scRight)
-                del corr_true_scRight
-            else:
-                print(f'File exsist {corr_true_file_scRight_wholebrain}')
-            if not acRight_file.exists():
-                corr_true_acRight = envelope_correlation(stcs,seed=seed_right_ac)
-                np.save(corr_true_file_acRight_wholebrain, corr_true_acRight)
-                del corr_true_acRight
-            else:
-                print(f'File exsist {corr_true_file_acRight_wholebrain}')
-            if not vcRight_file.exists():
-                corr_true_vcRight = envelope_correlation(stcs,seed=seed_right_vc)
-                np.save(corr_true_file_vcRight_wholebrain, corr_true_vcRight)
-                del corr_true_vcRight
-            else:
-                print(f'File exsist {corr_true_file_vcRight_wholebrain}')
+            all_corr = envelope_correlation(stcs, combine=None, orthogonalize="pairwise",
+                        log=True, absolute=True, verbose=None)
+
+            np.save(corr_true_file_scLeft_wholebrain, all_corr[seed_left_sc])
+            np.save(corr_true_file_acLeft_wholebrain, all_corr[seed_left_ac])
+            np.save(corr_true_file_vcLeft_wholebrain, all_corr[seed_left_vc])
+
+            np.save(corr_true_file_scRight_wholebrain, all_corr[seed_right_sc])
+            np.save(corr_true_file_acRight_wholebrain, all_corr[seed_right_ac])
+            np.save(corr_true_file_vcRight_wholebrain, all_corr[seed_right_vc])
+
+
             del stcs
 
     time_elapsed = datetime.now() - start_t
