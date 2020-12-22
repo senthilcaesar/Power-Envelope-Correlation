@@ -47,6 +47,7 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
+
 freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 
 def convert(seconds): 
@@ -193,7 +194,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     file_exist = [f for f in check_for_files if os.path.isfile(f)]
     file_not_exist = list(set(file_exist) ^ set(check_for_files))
 
-    if not file_not_exist: 
+    if not file_not_exist:
         print('SC, AC, VC correlation files exists...')
 
     else:
@@ -349,7 +350,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
         del stcs
 
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to30.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/68to88.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -359,7 +360,7 @@ def main():
     volume_spacing = 7.8
     for freq in freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=4)
+        pool = mp.Pool(processes=7)
         for subject in case_list:
             pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()

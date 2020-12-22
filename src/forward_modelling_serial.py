@@ -376,7 +376,7 @@ for freq in freqs:
         file_not_exist = list(set(file_exist) ^ set(check_for_files))
 
         print(file_exist)
-        if not file_not_exist: 
+        if file_not_exist: 
             print('SC, AC, VC correlation files exists...')
 
         else:
@@ -491,6 +491,8 @@ for freq in freqs:
             l_freq = freq-2.0
             h_freq = freq+2.0
             print(f'Band pass filter data [{l_freq}, {h_freq}]')
+
+
             raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq)
 
             if do_epochs:
@@ -517,13 +519,14 @@ for freq in freqs:
 
             filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
                             pick_ori='max-power', weight_norm='nai')
-            raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=2)
+            raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert()
 
             if do_epochs:
                 stcs = apply_lcmv_epochs(raw_proj_filtered_comp, filters, return_generator=False)
             else:
                 stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
                 stcs = [stcs]
+
             # Power Envelope Correlation
             print(f'Computing Power Envelope Correlation for {subject}....Orthogonalize True')
 
@@ -537,7 +540,6 @@ for freq in freqs:
             np.save(corr_true_file_scRight_wholebrain, all_corr[seed_right_sc])
             np.save(corr_true_file_acRight_wholebrain, all_corr[seed_right_ac])
             np.save(corr_true_file_vcRight_wholebrain, all_corr[seed_right_vc])
-
 
             del stcs
 

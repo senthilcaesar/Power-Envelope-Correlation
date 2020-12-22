@@ -2,16 +2,16 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/42to58.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to30.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 flag = 'true'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
 
-freq = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64] #, 96, 128]
+freq = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr = [0, 0.04, 0.08, 0.12, 0.16]
-spacing=30
+spacing=7.8
 sensory_mean = {'scLeft':None, 'acLeft':None, 'vcLeft':None,
                 'scRight':None, 'acRight':None, 'vcRight':None}
 fig, ax = plt.subplots(figsize=(6, 3))
@@ -24,7 +24,7 @@ for label in sensory_mean:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         for val in freq:
             corr_data_file = f'{subjects_dir}/{subject}/mne_files/{subject}_'\
-                            f'corr_ortho_{flag}_{spacing}_{val}_{label}_wholebrain_epoch.npy'
+                            f'corr_ortho_{flag}_{spacing}_{val}_{label}_wholebrain.npy'
             if Path(corr_data_file).exists():
                 if label == 'scLeft':
                     corr_data = float(np.load(corr_data_file)[1]) * 1.73
@@ -74,4 +74,4 @@ ax.set_title(f'Correlation between orthogonalized '
              f'sensory areas - 72 subjects, age (18-30)', fontsize=4)
 ax.legend(fontsize=8)
 ax.grid(False)
-#plt.savefig('/home/senthilp/Desktop/correlation_72_raw.png', dpi=600)
+plt.savefig('/home/senthilp/Desktop/correlation_72_raw.png', dpi=600)
