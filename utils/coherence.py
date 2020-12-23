@@ -36,7 +36,7 @@ def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
         se_data = se_data.data[[seed_l,seed_r]].copy()
 
         # logarithm of the squared amplitude envelopes (power envelopes)
-        data_mag = np.log(np.square(np.abs(se_data)))
+        data_mag = np.square(np.log(np.abs(se_data)))
     
         log_range = np.arange(-1.5,1.1,0.1)
         covar_freqs = [math.pow(10,val) for val in log_range]
@@ -57,7 +57,7 @@ def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
             spectral_estimate = cwt(data_mag, wvlt)
             spectral_estimate = spectral_estimate[:,0,:]
 
-            power_envelope = np.log(np.square(np.abs(spectral_estimate)))
+            power_envelope = np.square(np.log(np.abs(spectral_estimate)))
             power_envelope = power_envelope[np.newaxis,:,:]
 
             coherency, freqs, times, n_epochs, n_tapers = spectral_connectivity(
@@ -80,3 +80,15 @@ def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
         carrier_freqs = [math.pow(2,val) for val in log_range]
         '''
         return coherence_correlation
+
+
+def plain_coherence(se_data):
+
+        sfreq = 1000
+        coh, freqs, times, n_epochs, n_tapers = spectral_connectivity(
+            se_data, fmin=2, fmax=128, fskip=5, method='coh', sfreq=sfreq, n_jobs=4)
+        
+        coherence = np.real(coh)
+        coherence_corr = coherence[1,:,:][0]
+        np.save('/home/senthilp/Downloads/freqs.npy', freqs)
+        return coherence_corr

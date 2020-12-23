@@ -43,15 +43,15 @@ for label in sensory_mean:
     sensory_mean[label] = [np.mean(value) for key, value in myDict.items()]
     
 
-corr_sc = [(a + b)/2 for a, b in zip(sensory_mean['scLeft'], sensory_mean['scRight'])]
-corr_ac = [(a + b)/2 for a, b in zip(sensory_mean['acLeft'], sensory_mean['acRight'])]
-corr_vc = [(a + b)/2 for a, b in zip(sensory_mean['vcLeft'], sensory_mean['vcRight'])]
+mean_corr_sc = [(a + b)/2 for a, b in zip(sensory_mean['scLeft'], sensory_mean['scRight'])]
+mean_corr_ac = [(a + b)/2 for a, b in zip(sensory_mean['acLeft'], sensory_mean['acRight'])]
+mean_corr_vc = [(a + b)/2 for a, b in zip(sensory_mean['vcLeft'], sensory_mean['vcRight'])]
 
-ax.plot(x_pnts, corr_ac, '-ok', color='red', markerfacecolor='black', 
+ax.plot(x_pnts, mean_corr_ac, '-ok', color='red', markerfacecolor='black', 
         label='Auditory', alpha=1, markersize=3, linewidth=0.5)
-ax.plot(x_pnts, corr_sc, '-ok', color='gold', markerfacecolor='black', 
+ax.plot(x_pnts, mean_corr_sc, '-ok', color='gold', markerfacecolor='black', 
         label='Somat.', alpha=1, markersize=3, linewidth=0.5)
-ax.plot(x_pnts, corr_vc, '-ok', color='blue', markerfacecolor='black', 
+ax.plot(x_pnts, mean_corr_vc, '-ok', color='blue', markerfacecolor='black', 
         label='Visual', alpha=1, markersize=3, linewidth=0.5)
 
 error_bar = False
@@ -63,6 +63,33 @@ if error_bar:
         for i, val in enumerate(freq):
             ax.errorbar(x_pnts[i], mean_dict[k][val],color=sem_color[label], **linestyle)
 
+def compute_sem(mean_dict):
+    from scipy import stats
+    work = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}
+    for i, roi in enumerate(mean_dict):
+        for each_freq in roi:
+            work[i].append(stats.sem(roi[each_freq]))
+        
+    sem_sc = [(a + b)/2 for a, b in zip(work[0], work[3])]
+    sem_ac = [(a + b)/2 for a, b in zip(work[1], work[4])]
+    sem_vc = [(a + b)/2 for a, b in zip(work[2], work[5])]
+
+    return sem_sc, sem_ac, sem_vc
+
+sem_sc, sem_ac, sem_vc = compute_sem(mean_dict)
+
+plus_sc = [(a + b) for a, b in zip(mean_corr_sc, sem_sc)]
+plus_ac = [(a + b) for a, b in zip(mean_corr_ac, sem_ac)]
+plus_vc = [(a + b) for a, b in zip(mean_corr_vc, sem_vc)]
+
+minus_sc = [(a - b) for a, b in zip(mean_corr_sc, sem_sc)]
+minus_ac = [(a - b) for a, b in zip(mean_corr_ac, sem_ac)]
+minus_vc = [(a - b) for a, b in zip(mean_corr_vc, sem_vc)]
+
+ax.fill_between(x_pnts, plus_ac, minus_ac, color='red', alpha=0.1)
+ax.fill_between(x_pnts, plus_sc, minus_sc, color='gold', alpha=0.1)
+ax.fill_between(x_pnts, plus_vc, minus_vc, color='blue', alpha=0.1)
+
 ax.set_xticks(x_pnts)
 ax.set_yticks(y_corr)
 ax.set_xticklabels(freq, fontsize=4)
@@ -70,8 +97,8 @@ ax.set_yticklabels(y_corr, fontsize=4)
 ax.set_xlabel('Carrier frequency (Hz)', fontsize=4)
 ax.set_ylabel('Correlation', fontsize=4)
 ax.set_title(f'Correlation between orthogonalized '
-             f'spontaneous signals from homologous early ' 
-             f'sensory areas - 72 subjects, age (18-30)', fontsize=4)
+              f'spontaneous signals from homologous early ' 
+              f'sensory areas - 72 subjects, age (18-30)', fontsize=4)
 ax.legend(fontsize=8)
 ax.grid(False)
 plt.savefig('/home/senthilp/Desktop/correlation_72_raw.png', dpi=600)
