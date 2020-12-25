@@ -154,15 +154,19 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
     sources_mni = apply_trans(vox_ras_mni_t, sources)
     return sources_mni
 
+def set_num_threads(nt):
+    import mkl
+    mkl.set_num_threads(nt)
+    nt = str(nt)
+    os.environ["OMP_NUM_THREADS"] = nt         # export OMP_NUM_THREADS=1
+    os.environ["OPENBLAS_NUM_THREADS"] = nt    # export OPENBLAS_NUM_THREADS=1
+    os.environ["MKL_NUM_THREADS"] = nt         # export MKL_NUM_THREADS=1
+    os.environ["VECLIB_MAXIMUM_THREADS"] = nt  # export VECLIB_MAXIMUM_THREADS=1
+    os.environ["NUMEXPR_NUM_THREADS"] = nt     # export NUMEXPR_NUM_THREADS=1
 
 def run_correlation(subjects_dir, subject, volume_spacing, freq):
 
-    os.environ["OMP_NUM_THREADS"] = "10"         # export OMP_NUM_THREADS=1
-    os.environ["OPENBLAS_NUM_THREADS"] = "10"    # export OPENBLAS_NUM_THREADS=1
-    os.environ["MKL_NUM_THREADS"] = "10"         # export MKL_NUM_THREADS=1
-    os.environ["VECLIB_MAXIMUM_THREADS"] = "10"  # export VECLIB_MAXIMUM_THREADS=1
-    os.environ["NUMEXPR_NUM_THREADS"] = "10"     # export NUMEXPR_NUM_THREADS=1
-
+    set_num_threads(10)
     frequency = str(freq)
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'

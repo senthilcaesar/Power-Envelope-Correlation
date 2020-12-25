@@ -9,14 +9,27 @@ with open(cases) as f:
      case_list = f.read().splitlines()
 
 
+def compute_sem(mean_dict):
+    from scipy import stats
+    work = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}
+    for i, roi in enumerate(mean_dict):
+        for each_freq in roi:
+            work[i].append(stats.sem(roi[each_freq]))
+        
+    sem_sc = [(a + b)/2 for a, b in zip(work[0], work[3])]
+    sem_ac = [(a + b)/2 for a, b in zip(work[1], work[4])]
+    sem_vc = [(a + b)/2 for a, b in zip(work[2], work[5])]
+
+    return sem_sc, sem_ac, sem_vc
+
 freq = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr = [0, 0.04, 0.08, 0.12, 0.16]
-spacing=30
+spacing=7.8
+
 sensory_mean = {'scLeft':None, 'acLeft':None, 'vcLeft':None,
                 'scRight':None, 'acRight':None, 'vcRight':None}
 
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(30, 5))
-
 x_pnts = np.arange(len(freq))
 
 mean_dict = []
@@ -45,11 +58,22 @@ for label in sensory_mean:
     sensory_mean[label] = [np.mean(value) for key, value in myDict.items()]
     
 
-corr_sc = [(a + b)/2 for a, b in zip(sensory_mean['scLeft'], sensory_mean['scRight'])]
-corr_ac = [(a + b)/2 for a, b in zip(sensory_mean['acLeft'], sensory_mean['acRight'])]
-corr_vc = [(a + b)/2 for a, b in zip(sensory_mean['vcLeft'], sensory_mean['vcRight'])]
+mean_corr_sc = [(a + b)/2 for a, b in zip(sensory_mean['scLeft'], sensory_mean['scRight'])]
+mean_corr_ac = [(a + b)/2 for a, b in zip(sensory_mean['acLeft'], sensory_mean['acRight'])]
+mean_corr_vc = [(a + b)/2 for a, b in zip(sensory_mean['vcLeft'], sensory_mean['vcRight'])]
 
 
+sem_sc, sem_ac, sem_vc = compute_sem(mean_dict)
+plus_sc = [(a + b) for a, b in zip(mean_corr_sc, sem_sc)]
+plus_ac = [(a + b) for a, b in zip(mean_corr_ac, sem_ac)]
+plus_vc = [(a + b) for a, b in zip(mean_corr_vc, sem_vc)]
+minus_sc = [(a - b) for a, b in zip(mean_corr_sc, sem_sc)]
+minus_ac = [(a - b) for a, b in zip(mean_corr_ac, sem_ac)]
+minus_vc = [(a - b) for a, b in zip(mean_corr_vc, sem_vc)]
+
+#ax.fill_between(x_pnts, plus_ac, minus_ac, color='red', alpha=0.1)
+#ax.fill_between(x_pnts, plus_sc, minus_sc, color='gold', alpha=0.1)
+#ax.fill_between(x_pnts, plus_vc, minus_vc, color='blue', alpha=0.1)
 
 cases2 = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/42to58.txt'
 subjects_dir2 = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
@@ -60,7 +84,7 @@ with open(cases2) as f2:
 
 freq2 = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr2 = [0, 0.04, 0.08, 0.12, 0.16]
-spacing2=30
+spacing2=7.8
 sensory_mean2 = {'scLeft':None, 'acLeft':None, 'vcLeft':None,
                 'scRight':None, 'acRight':None, 'vcRight':None}
 
@@ -90,11 +114,18 @@ for label2 in sensory_mean2:
     sensory_mean2[label2] = [np.mean(value2) for key2, value2 in myDict2.items()]
     
 
-corr_sc2 = [(a + b)/2 for a, b in zip(sensory_mean2['scLeft'], sensory_mean2['scRight'])]
-corr_ac2 = [(a + b)/2 for a, b in zip(sensory_mean2['acLeft'], sensory_mean2['acRight'])]
-corr_vc2 = [(a + b)/2 for a, b in zip(sensory_mean2['vcLeft'], sensory_mean2['vcRight'])]
+mean_corr_sc2 = [(a + b)/2 for a, b in zip(sensory_mean2['scLeft'], sensory_mean2['scRight'])]
+mean_corr_ac2 = [(a + b)/2 for a, b in zip(sensory_mean2['acLeft'], sensory_mean2['acRight'])]
+mean_corr_vc2 = [(a + b)/2 for a, b in zip(sensory_mean2['vcLeft'], sensory_mean2['vcRight'])]
 
 
+sem_sc2, sem_ac2, sem_vc2 = compute_sem(mean_dict2)
+plus_sc2 = [(a + b) for a, b in zip(mean_corr_sc2, sem_sc2)]
+plus_ac2 = [(a + b) for a, b in zip(mean_corr_ac2, sem_ac2)]
+plus_vc2 = [(a + b) for a, b in zip(mean_corr_vc2, sem_vc2)]
+minus_sc2 = [(a - b) for a, b in zip(mean_corr_sc2, sem_sc2)]
+minus_ac2 = [(a - b) for a, b in zip(mean_corr_ac2, sem_ac2)]
+minus_vc2 = [(a - b) for a, b in zip(mean_corr_vc2, sem_vc2)]
 
 cases3 = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/68to88.txt'
 subjects_dir3 = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
@@ -105,7 +136,7 @@ with open(cases3) as f3:
 
 freq3 = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr3 = [0, 0.04, 0.08, 0.12, 0.16]
-spacing3=30
+spacing3=7.8
 sensory_mean3 = {'scLeft':None, 'acLeft':None, 'vcLeft':None,
                 'scRight':None, 'acRight':None, 'vcRight':None}
 
@@ -135,33 +166,49 @@ for label3 in sensory_mean3:
     sensory_mean3[label3] = [np.mean(value3) for key3, value3 in myDict3.items()]
     
 
-corr_sc3 = [(a + b)/2 for a, b in zip(sensory_mean3['scLeft'], sensory_mean3['scRight'])]
-corr_ac3 = [(a + b)/2 for a, b in zip(sensory_mean3['acLeft'], sensory_mean3['acRight'])]
-corr_vc3 = [(a + b)/2 for a, b in zip(sensory_mean3['vcLeft'], sensory_mean3['vcRight'])]
+mean_corr_sc3 = [(a + b)/2 for a, b in zip(sensory_mean3['scLeft'], sensory_mean3['scRight'])]
+mean_corr_ac3 = [(a + b)/2 for a, b in zip(sensory_mean3['acLeft'], sensory_mean3['acRight'])]
+mean_corr_vc3 = [(a + b)/2 for a, b in zip(sensory_mean3['vcLeft'], sensory_mean3['vcRight'])]
 
 
-ax1.plot(x_pnts, corr_ac, '-ok', color='red', markerfacecolor='black', 
+sem_sc3, sem_ac3, sem_vc3 = compute_sem(mean_dict3)
+plus_sc3 = [(a + b) for a, b in zip(mean_corr_sc3, sem_sc3)]
+plus_ac3 = [(a + b) for a, b in zip(mean_corr_ac3, sem_ac3)]
+plus_vc3 = [(a + b) for a, b in zip(mean_corr_vc3, sem_vc3)]
+minus_sc3 = [(a - b) for a, b in zip(mean_corr_sc3, sem_sc3)]
+minus_ac3 = [(a - b) for a, b in zip(mean_corr_ac3, sem_ac3)]
+minus_vc3 = [(a - b) for a, b in zip(mean_corr_vc3, sem_vc3)]
+
+
+ax1.plot(x_pnts, mean_corr_ac, '-ok', color='red', markerfacecolor='black', 
         label='Auditory young', alpha=1, markersize=3, linewidth=0.5)
-ax1.plot(x_pnts, corr_ac2, '-ok', color='green', markerfacecolor='black', 
+ax1.fill_between(x_pnts, plus_ac, minus_ac, color='red', alpha=0.1)
+ax1.plot(x_pnts, mean_corr_ac2, '-ok', color='green', markerfacecolor='black', 
         label='Auditory middle', alpha=1, markersize=3, linewidth=0.5)
-ax1.plot(x_pnts, corr_ac3, '-ok', color='blue', markerfacecolor='black', 
+ax1.fill_between(x_pnts, plus_ac2, minus_ac2, color='green', alpha=0.1)
+ax1.plot(x_pnts, mean_corr_ac3, '-ok', color='blue', markerfacecolor='black', 
         label='Auditory old', alpha=1, markersize=3, linewidth=0.5)
+ax1.fill_between(x_pnts, plus_ac3, minus_ac3, color='blue', alpha=0.1)
 
-ax2.plot(x_pnts, corr_sc, '-ok', color='red', markerfacecolor='black', 
+ax2.plot(x_pnts, mean_corr_sc, '-ok', color='red', markerfacecolor='black', 
         label='Somat young', alpha=1, markersize=3, linewidth=0.5)
-ax2.plot(x_pnts, corr_sc2, '-ok', color='green', markerfacecolor='black', 
+ax2.fill_between(x_pnts, plus_sc, minus_sc, color='red', alpha=0.1)
+ax2.plot(x_pnts, mean_corr_sc2, '-ok', color='green', markerfacecolor='black', 
         label='Somat middle', alpha=1, markersize=3, linewidth=0.5)
-ax2.plot(x_pnts, corr_sc3, '-ok', color='blue', markerfacecolor='black', 
+ax2.fill_between(x_pnts, plus_sc2, minus_sc2, color='green', alpha=0.1)
+ax2.plot(x_pnts, mean_corr_sc3, '-ok', color='blue', markerfacecolor='black', 
         label='Somat old', alpha=1, markersize=3, linewidth=0.5)
+ax2.fill_between(x_pnts, plus_sc3, minus_sc3, color='blue', alpha=0.1)
 
-ax3.plot(x_pnts, corr_vc, '-ok', color='red', markerfacecolor='black', 
+ax3.plot(x_pnts, mean_corr_vc, '-ok', color='red', markerfacecolor='black', 
         label='Visual young', alpha=1, markersize=3, linewidth=0.5)
-ax3.plot(x_pnts, corr_vc2, '-ok', color='green', markerfacecolor='black', 
+ax3.fill_between(x_pnts, plus_vc, minus_vc, color='red', alpha=0.1)
+ax3.plot(x_pnts, mean_corr_vc2, '-ok', color='green', markerfacecolor='black', 
         label='Visual middle', alpha=1, markersize=3, linewidth=0.5)
-ax3.plot(x_pnts, corr_vc3, '-ok', color='blue', markerfacecolor='black', 
+ax3.fill_between(x_pnts, plus_vc2, minus_vc2, color='green', alpha=0.1)
+ax3.plot(x_pnts, mean_corr_vc3, '-ok', color='blue', markerfacecolor='black', 
         label='Visual old', alpha=1, markersize=3, linewidth=0.5)
-
-
+ax3.fill_between(x_pnts, plus_vc3, minus_vc3, color='blue', alpha=0.1)
 
 ax1.set_xticks(x_pnts)
 ax1.set_yticks(y_corr)
@@ -199,5 +246,5 @@ ax3.set_title(f'Correlation between orthogonalized '
 ax3.legend(fontsize=8)
 ax3.grid(False)
 
-fig.suptitle('Continuous data', fontsize=20)
-plt.savefig('/home/senthilp/Desktop/test_raw.png', dpi=600)
+# fig.suptitle('Continuous data', fontsize=20)
+plt.savefig('/home/senthilp/Desktop/homo_corr.png', dpi=600)
