@@ -134,8 +134,19 @@ def miscelaneous():
     print(x,y,z)
 
 
+def set_num_threads(nt):
+    import mkl
+    mkl.set_num_threads(nt)
+    nt = str(nt)
+    os.environ["OMP_NUM_THREADS"] = nt         # export OMP_NUM_THREADS=1
+    os.environ["OPENBLAS_NUM_THREADS"] = nt    # export OPENBLAS_NUM_THREADS=1
+    os.environ["MKL_NUM_THREADS"] = nt         # export MKL_NUM_THREADS=1
+    os.environ["VECLIB_MAXIMUM_THREADS"] = nt  # export VECLIB_MAXIMUM_THREADS=1
+    os.environ["NUMEXPR_NUM_THREADS"] = nt     # export NUMEXPR_NUM_THREADS=1
+
 def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
 
+        set_num_threads(10)
         sources = []
         src_space = mne.read_source_spaces(src_space)
         # lh_surf_coord = src_space[0]['rr']     					# Triangle Mesh coordinates

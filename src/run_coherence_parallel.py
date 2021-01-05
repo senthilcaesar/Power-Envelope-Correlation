@@ -1,22 +1,28 @@
+from re import VERBOSE
+import math
 import mne
 import numpy as np
 import os
+import sys
 import os.path as op
 import subprocess
 from mne.transforms import apply_trans
 import nibabel as nib
+import multiprocessing as mp
 from pathlib import Path
 import subprocess
 import pathlib
-import math
-import multiprocessing as mp
+from mne.connectivity import envelope_correlation, envelope_coherence
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
-from mne.connectivity import envelope_coherence
-from mne.beamformer import make_lcmv, apply_lcmv_raw
+from mne.beamformer import make_lcmv, apply_lcmv_raw, apply_lcmv_epochs
+from functools import wraps
 import matplotlib.pyplot as plt
-os.environ['ETS_TOOLKIT'] = 'qt4'
-os.environ['QT_API'] = 'pyqt'
+import time
+os.environ['ETS_TOOLKIT']='qt4'
+os.environ['QT_API']='pyqt'
 os.environ['QT_DEBUG_PLUGINS']='0'
+
+
 
 '''Bilateral sensory locations in MNI space'''
 ROI_mni = { 
@@ -42,7 +48,24 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
-def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='volume', 
+
+
+def convert(seconds): 
+    return time.strftime("%H:%M:%S", time.gmtime(seconds))
+
+
+def timefn(fn):
+    @wraps(fn)
+    def measure_time(*args, **kwargs):
+        t1 = time.time()
+        result = fn(*args, **kwargs)
+        t2 = time.time()
+        print (f'@timefn: {fn.__name__} took {convert(t2-t1)} (hh:mm:ss)')
+        return result
+    return measure_time
+
+
+def compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=False, ss='volume', 
                         volume_spacing=10):
 
     src = None
@@ -78,7 +101,7 @@ def forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname):
                             subjects_dir=subjects_dir)
     bem = mne.make_bem_solution(model)
     fwd = mne.make_forward_solution(fname_meg, trans=trans, src=src, bem=bem,
-                                    meg=True, eeg=False, mindist=5.0, n_jobs=16)
+                                    meg=True, eeg=False, mindist=5.06)
     # print(fwd)
     mne.write_forward_solution(fwd_fname, fwd, overwrite=True, verbose=None)
     #leadfield = fwd['sol']['data']
@@ -131,9 +154,19 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
     sources_mni = apply_trans(vox_ras_mni_t, sources)
     return sources_mni
 
+def set_num_threads(nt):
+    import mkl
+    mkl.set_num_threads(nt)
+    nt = str(nt)
+    os.environ["OMP_NUM_THREADS"] = nt         # export OMP_NUM_THREADS=1
+    os.environ["OPENBLAS_NUM_THREADS"] = nt    # export OPENBLAS_NUM_THREADS=1
+    os.environ["MKL_NUM_THREADS"] = nt         # export MKL_NUM_THREADS=1
+    os.environ["VECLIB_MAXIMUM_THREADS"] = nt  # export VECLIB_MAXIMUM_THREADS=1
+    os.environ["NUMEXPR_NUM_THREADS"] = nt     # export NUMEXPR_NUM_THREADS=1
 
 def run_coherence(subjects_dir, subject, volume_spacing, freq):
 
+    set_num_threads(10)
     frequency = str(freq)
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
@@ -144,13 +177,16 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
     fwd_fname = f'{DATA_DIR}/{subject}_{volume_spacing}-fwd.fif.gz'
     src_fname = f'{DATA_DIR}/{subject}_{volume_spacing}-src.fif.gz'
     cov_fname = f'{DATA_DIR}/{subject}-cov_{volume_spacing}.fif.gz'
+    raw_cov_fname = f'{DATA_DIR}/{subject}-rawcov_{volume_spacing}.fif.gz'
     raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
     source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
+
+
     coherence_file_sc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_sc.npy'
     coherence_file_ac = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_ac.npy'
     coherence_file_vc = f'{DATA_DIR}/{subject}_coh_{volume_spacing}_{frequency}_vc.npy'
-    trans = f'/home/senthil/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
-
+    
+    trans = f'/home/senthilp/caesar/camcan/cc700/camcan_coreg-master/trans/{subject}-trans.fif' # The transformation file obtained by coregistration
     file_trans = pathlib.Path(trans)
     file_ss = pathlib.Path(src_fname)
     file_fm = pathlib.Path(fwd_fname)
@@ -159,13 +195,19 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
     file_sc = pathlib.Path(coherence_file_sc)
     file_ac = pathlib.Path(coherence_file_ac)
     file_vc = pathlib.Path(coherence_file_vc)
+    file_rawcov = pathlib.Path(raw_cov_fname) 
     t1 = nib.load(t1_fname)
+    
 
     if not file_trans.exists():
         print (f'{trans} File doesnt exist...')
+        sys.exit(0)
+
+    info = mne.io.read_info(fname_meg)
+    # plot_registration(info, trans, subject, subjects_dir)
 
     if not file_ss.exists():
-        src = compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss=space, 
+        src = compute_SourceSpace(subject, subjects_dir, src_fname, source_voxel_coords, plot=True, ss='volume', 
                             volume_spacing=volume_spacing)
         seed_l_sc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['SSC_Left'])
         seed_r_sc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['SSC_Right'])
@@ -188,12 +230,15 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
         src[0]['rr'][loc_r_vc] = seed_r_vc
         src.save(src_fname, overwrite=True)
     src = mne.read_source_spaces(src_fname)
+    #view_SS_brain(subject, subjects_dir, src)
 
     if not file_fm.exists():
         forward_model(subject, subjects_dir, fname_meg, trans, src, fwd_fname)
     fwd = mne.read_forward_solution(fwd_fname)
 
+    # sensitivty_plot(subject, subjects_dir, fwd)
     raw = mne.io.read_raw_fif(fname_meg, verbose='error', preload=True)
+
     srate = raw.info['sfreq']
     n_time_samps = raw.n_times
     time_secs = raw.times
@@ -213,11 +258,11 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
     print(f"The raw data object has {n_time_samps} time samples and {n_chan} channels.")
     print('------------------------------------------------------------------------')
     print('\n')
+    # raw.plot(n_channels=10, scalings='auto', title='Data from arrays', show=True, block=True)
     if not file_proj.exists():
         projs_ecg, _ = compute_proj_ecg(raw, n_grad=1, n_mag=2, ch_name='ECG063')
         projs_eog1, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG061')
         projs_eog2, _ = compute_proj_eog(raw, n_grad=1, n_mag=2, ch_name='EOG062')
-        print(subject)
         if projs_ecg is not None:
             mne.write_proj(heartbeat_proj, projs_ecg) # Saving projectors
             raw.info['projs'] += projs_ecg
@@ -239,16 +284,29 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
         mne.write_cov(cov_fname, cov)
     cov = mne.read_cov(cov_fname) 
 
-    do_filter = True
+    # cov.plot(raw.info, proj=True, exclude='bads', show_svd=False
+    # raw_proj_applied.crop(tmax=10)
+    
+    do_epochs = False
+
     l_freq = freq-2.0
     h_freq = freq+2.0
-    if do_filter:
-        print(f'Band pass filter data [{l_freq}, {h_freq}]')
-        raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq)
-        data_cov = mne.compute_raw_covariance(raw_proj_filtered)
+    print(f'Band pass filter data [{l_freq}, {h_freq}]')
+    raw_proj_filtered = raw_proj_applied.filter(l_freq=l_freq, h_freq=h_freq)
+
+    if do_epochs:
+        print('Segmenting raw data...')
+        events = mne.make_fixed_length_events(raw_proj_filtered, duration=5.)
+        raw_proj_filtered = mne.Epochs(raw_proj_filtered, events=events, tmin=0, tmax=5.,
+                                        baseline=None, preload=True)
+        data_cov = mne.compute_covariance(raw_proj_filtered)         
     else:
-        data_cov = cov
-        raw_proj_filtered = raw_proj_applied
+        if not file_rawcov.exists():
+            data_cov = mne.compute_raw_covariance(raw_proj_filtered)
+            mne.write_cov(raw_cov_fname, data_cov)
+        else:
+            data_cov = mne.read_cov(file_rawcov)
+
 
     seed_left_sc = 0
     seed_right_sc = 1
@@ -257,12 +315,16 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
     seed_left_vc = 4
     seed_right_vc = 5
     
-    filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
-                    pick_ori='max-power', weight_norm='nai')
-    raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert(n_jobs=2)
-    stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
 
-    # Coherence
+    filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
+                        pick_ori='max-power', weight_norm='nai')
+    raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert()
+
+    if do_epochs:
+        stcs = apply_lcmv_epochs(raw_proj_filtered_comp, filters, return_generator=False)
+    else:
+        stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
+    
     print(f'Computing coherence for {subject}....')
     if not file_sc.exists():
         coh_sc = envelope_coherence(stcs, seed_l=seed_left_sc, seed_r=seed_right_sc, fmin=l_freq, fmax=h_freq)
@@ -281,20 +343,22 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
 
 log_range = np.arange(2,7.25,0.25)
 carrier_freqs = [math.pow(2,val) for val in log_range]
-cases = '/home/senthil/caesar/camcan/cc700/freesurfer_output/18to30.txt'
-subjects_dir = '/home/senthil/caesar/camcan/cc700/freesurfer_output'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to30.txt'
+subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
+@timefn
 def main():
     volume_spacing = 30
     for freq in carrier_freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=3)
+        pool = mp.Pool(processes=15)
         for subject in case_list:
             pool.apply_async(run_coherence, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()
         pool.join()
+
 
 if __name__ == "__main__":
     main()

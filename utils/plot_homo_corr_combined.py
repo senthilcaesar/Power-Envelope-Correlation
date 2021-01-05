@@ -71,9 +71,6 @@ minus_sc = [(a - b) for a, b in zip(mean_corr_sc, sem_sc)]
 minus_ac = [(a - b) for a, b in zip(mean_corr_ac, sem_ac)]
 minus_vc = [(a - b) for a, b in zip(mean_corr_vc, sem_vc)]
 
-#ax.fill_between(x_pnts, plus_ac, minus_ac, color='red', alpha=0.1)
-#ax.fill_between(x_pnts, plus_sc, minus_sc, color='gold', alpha=0.1)
-#ax.fill_between(x_pnts, plus_vc, minus_vc, color='blue', alpha=0.1)
 
 cases2 = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/42to58.txt'
 subjects_dir2 = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'

@@ -12,7 +12,7 @@ with open(cases) as f:
 log_range = np.arange(2,7.25,0.25)
 carrier_freqs = [math.pow(2,val) for val in log_range]
 
-sensory_mean = {'vc':None}#, 'ac':None, 'vc':None}
+sensory_mean = {'sc':None, 'ac':None, 'vc':None}
 
 space = 30
 covar_freq_list = []
