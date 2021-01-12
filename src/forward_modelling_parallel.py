@@ -50,6 +50,7 @@ ROI_mni = {
 
 freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 
+
 def convert(seconds): 
     return time.strftime("%H:%M:%S", time.gmtime(seconds))
 
@@ -154,9 +155,7 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
     sources_mni = apply_trans(vox_ras_mni_t, sources)
     return sources_mni
 
-def set_num_threads(nt):
-    import mkl
-    mkl.set_num_threads(nt)
+def num_threads(nt):
     nt = str(nt)
     os.environ["OMP_NUM_THREADS"] = nt         # export OMP_NUM_THREADS=1
     os.environ["OPENBLAS_NUM_THREADS"] = nt    # export OPENBLAS_NUM_THREADS=1
@@ -166,7 +165,7 @@ def set_num_threads(nt):
 
 def run_correlation(subjects_dir, subject, volume_spacing, freq):
 
-    set_num_threads(10)
+    num_threads(10)
     frequency = str(freq)
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
@@ -354,7 +353,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
         del stcs
 
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/68to88.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/31to41.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -364,7 +363,7 @@ def main():
     volume_spacing = 7.8
     for freq in freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=7)
+        pool = mp.Pool(processes=1)
         for subject in case_list:
             pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()

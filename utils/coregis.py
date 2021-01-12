@@ -1,9 +1,10 @@
-
 import mne
+import multiprocessing as mp
 import os
 import subprocess
 from IPython.display import Image
 from mayavi import mlab
+from common import *
 import pathlib
 from mne.viz import plot_alignment, set_3d_view
 os.environ['ETS_TOOLKIT'] = 'qt4'
@@ -38,22 +39,30 @@ def plot_registration(info, trans, subject, subjects_dir):
     mlab.show()
 
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/68to88.txt'
+def MEG_head_registration(case_list):
+    for subject in case_list:
+        trans = f'{coregis_dir}/{subject}-trans.fif' # The transformation file obtained by coregistration
+        file_trans = pathlib.Path(trans)
+        if not file_trans.exists():
+            print(f'{trans} File doesnt exist... {subject}')
+            coregistration(subject, subjects_dir, trans)
+
+
+def bem_and_scalp(subject, subjects_dir):
+    print(f'Processing subject {subject}...')
+    set_num_threads(10)
+    compute_bem(subject, subjects_dir)
+    compute_scalp_surfaces(subject, subjects_dir)
+
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/31to41.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 coregis_dir = '/home/senthilp/caesar/camcan/cc700/camcan_coreg-master/trans'
 with open(cases) as f:
      case_list = f.read().splitlines()
 
 
+pool = mp.Pool(processes=15)
 for subject in case_list:
-    bem_dir = f'{subjects_dir}/{subject}/bem'
-    trans = f'{coregis_dir}/{subject}-trans.fif' # The transformation file obtained by coregistration
-    file_trans = pathlib.Path(trans)
-
-    if not os.path.exists(bem_dir):
-        compute_bem(subject, subjects_dir)
-        compute_scalp_surfaces(subject, subjects_dir)
-
-    if not file_trans.exists():
-        print(f'{trans} File doesnt exist... {subject}')
-        coregistration(subject, subjects_dir, trans)
+    pool.apply_async(bem_and_scalp, args=[subject, subjects_dir])
+pool.close()
+pool.join()

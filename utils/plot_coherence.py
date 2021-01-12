@@ -32,7 +32,7 @@ coherence_correlation = np.flip(coherence_correlation, 0)
 
 fig, ax = plt.subplots(figsize=(6, 3))
 plt.imshow(coherence_correlation, aspect='auto', 
-            cmap='jet', interpolation='gaussian') #vmin=-0.5, vmax=0.5)
+            cmap='jet', interpolation='gaussian', vmin=0.5, vmax=0.9)
 ax.set_xticks([0,5,10,15,20,25])
 ax.set_xticklabels(['0.032','0.1','0.32','1.0','3.2','10'], fontsize=4)
 ax.set_yticks([0,4,8,12,16,20])

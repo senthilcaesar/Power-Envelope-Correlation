@@ -2,15 +2,29 @@ import os
 import subprocess
 from settings import Settings
 import multiprocessing as mp
+import time
+from functools import wraps
 
 os.putenv("SUBJECTS_DIR", "/home/senthilp/caesar/camcan/cc700/freesurfer_output/new")
 os.putenv("FREESURFER_HOME", "/home/senthilp/freesurfer")
 os.system("echo $SUBJECTS_DIR")
 os.system("echo $FREESURFER_HOME")
 
-def freesurfer_recon_all(T1_mri, subject):
 
-    bash_cmd = f'recon-all -s {subject} -i {T1_mri} -all'
+def timefn(fn):
+    @wraps(fn)
+    def measure_time(*args, **kwargs):
+        t1 = time.time()
+        result = fn(*args, **kwargs)
+        t2 = time.time()
+        print (f'@timefn: {fn.__name__} took {convert(t2-t1)} (hh:mm:ss)')
+        return result
+    return measure_time
+
+
+@timefn
+def freesurfer_recon_all(T1_mri, subject):
+    bash_cmd = f'recon-all -s {subject} -i {T1_mri} -all -parallel -threads 4'
     print(bash_cmd)
     subprocess.check_output(bash_cmd, shell=True)
 
