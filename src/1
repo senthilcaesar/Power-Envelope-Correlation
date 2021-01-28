@@ -11,7 +11,7 @@ import multiprocessing as mp
 from pathlib import Path
 import subprocess
 import pathlib
-from mne.connectivity import envelope_correlation
+from mne.connectivity import envelope_correlation, envelope_coherence
 from mne.preprocessing import compute_proj_ecg, compute_proj_eog
 from mne.beamformer import make_lcmv, apply_lcmv_raw, apply_lcmv_epochs
 from functools import wraps
@@ -156,6 +156,8 @@ def source_to_MNI(subject, subjects_dir, t1, sources):
     return sources_mni
 
 def num_threads(nt):
+    import mkl
+    mkl.set_num_threads(nt)
     nt = str(nt)
     os.environ["OMP_NUM_THREADS"] = nt         # export OMP_NUM_THREADS=1
     os.environ["OPENBLAS_NUM_THREADS"] = nt    # export OPENBLAS_NUM_THREADS=1
@@ -165,7 +167,7 @@ def num_threads(nt):
 
 def run_correlation(subjects_dir, subject, volume_spacing, freq):
 
-    num_threads(4)
+    num_threads(2)
     frequency = str(freq)
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
@@ -363,15 +365,12 @@ def main():
     volume_spacing = 30
     for freq in freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=60)
+        pool = mp.Pool(processes=100)
         for subject in case_list:
             pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()
         pool.join()
 
+@timefn
 if __name__ == "__main__":
-    import time 
-    startTime = time.time()
     main()
-    print('The script took {0} second !'.format(time.time() - startTime))
-

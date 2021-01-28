@@ -24,7 +24,7 @@ def timefn(fn):
 
 @timefn
 def freesurfer_recon_all(T1_mri, subject):
-    bash_cmd = f'recon-all -s {subject} -i {T1_mri} -all -parallel -threads 4'
+    bash_cmd = f'recon-all -s {subject} -i {T1_mri} -all -threads 4'
     print(bash_cmd)
     subprocess.check_output(bash_cmd, shell=True)
 
