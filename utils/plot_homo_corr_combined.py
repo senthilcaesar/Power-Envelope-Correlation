@@ -24,7 +24,7 @@ def compute_sem(mean_dict):
 
 freq = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr = [0, 0.04, 0.08, 0.12, 0.16]
-spacing=7.8
+spacing=30
 
 sensory_mean = {'scLeft':None, 'acLeft':None, 'vcLeft':None,
                 'scRight':None, 'acRight':None, 'vcRight':None}
@@ -39,7 +39,7 @@ for label in sensory_mean:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         for val in freq:
             corr_data_file = f'{subjects_dir}/{subject}/mne_files/{subject}_'\
-                            f'corr_ortho_{flag}_{spacing}_{val}_{label}_wholebrain.npy'
+                            f'corr_ortho_{flag}_{spacing}_{val}_{label}.npy'
             if Path(corr_data_file).exists():
                 if label == 'scLeft':
                     corr_data = float(np.load(corr_data_file)[1]) * 1.73
@@ -81,7 +81,7 @@ with open(cases2) as f2:
 
 freq2 = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr2 = [0, 0.04, 0.08, 0.12, 0.16]
-spacing2=7.8
+spacing2=30
 sensory_mean2 = {'scLeft':None, 'acLeft':None, 'vcLeft':None,
                 'scRight':None, 'acRight':None, 'vcRight':None}
 
@@ -92,7 +92,7 @@ for label2 in sensory_mean2:
         DATA_DIR2 = Path(f'{subjects_dir}', f'{subject2}', 'mne_files')
         for val2 in freq2:
             corr_data_file2 = f'{subjects_dir}/{subject2}/mne_files/{subject2}_'\
-                            f'corr_ortho_{flag2}_{spacing2}_{val2}_{label2}_wholebrain.npy'
+                            f'corr_ortho_{flag2}_{spacing2}_{val2}_{label2}.npy'
             if Path(corr_data_file2).exists():
                 if label2 == 'scLeft':
                     corr_data2 = float(np.load(corr_data_file2)[1]) * 1.73
@@ -133,7 +133,7 @@ with open(cases3) as f3:
 
 freq3 = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 y_corr3 = [0, 0.04, 0.08, 0.12, 0.16]
-spacing3=7.8
+spacing3=30
 sensory_mean3 = {'scLeft':None, 'acLeft':None, 'vcLeft':None,
                 'scRight':None, 'acRight':None, 'vcRight':None}
 
@@ -144,7 +144,7 @@ for label3 in sensory_mean3:
         DATA_DIR3 = Path(f'{subjects_dir}', f'{subject3}', 'mne_files')
         for val3 in freq3:
             corr_data_file3 = f'{subjects_dir}/{subject3}/mne_files/{subject3}_'\
-                            f'corr_ortho_{flag3}_{spacing3}_{val3}_{label3}_wholebrain.npy'
+                            f'corr_ortho_{flag3}_{spacing3}_{val3}_{label3}.npy'
             if Path(corr_data_file3).exists():
                 if label3 == 'scLeft':
                     corr_data3 = float(np.load(corr_data_file3)[1]) * 1.73
