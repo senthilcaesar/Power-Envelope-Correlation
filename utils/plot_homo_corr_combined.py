@@ -39,7 +39,7 @@ for label in sensory_mean:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         for val in freq:
             corr_data_file = f'{subjects_dir}/{subject}/mne_files/{subject}_'\
-                            f'corr_ortho_{flag}_{spacing}_{val}_{label}.npy'
+                            f'corr_ortho_{flag}_{spacing}_{val}_{label}_128.npy'
             if Path(corr_data_file).exists():
                 if label == 'scLeft':
                     corr_data = float(np.load(corr_data_file)[1]) * 1.73
@@ -92,7 +92,7 @@ for label2 in sensory_mean2:
         DATA_DIR2 = Path(f'{subjects_dir}', f'{subject2}', 'mne_files')
         for val2 in freq2:
             corr_data_file2 = f'{subjects_dir}/{subject2}/mne_files/{subject2}_'\
-                            f'corr_ortho_{flag2}_{spacing2}_{val2}_{label2}.npy'
+                            f'corr_ortho_{flag2}_{spacing2}_{val2}_{label2}_128.npy'
             if Path(corr_data_file2).exists():
                 if label2 == 'scLeft':
                     corr_data2 = float(np.load(corr_data_file2)[1]) * 1.73
@@ -144,7 +144,7 @@ for label3 in sensory_mean3:
         DATA_DIR3 = Path(f'{subjects_dir}', f'{subject3}', 'mne_files')
         for val3 in freq3:
             corr_data_file3 = f'{subjects_dir}/{subject3}/mne_files/{subject3}_'\
-                            f'corr_ortho_{flag3}_{spacing3}_{val3}_{label3}.npy'
+                            f'corr_ortho_{flag3}_{spacing3}_{val3}_{label3}_128.npy'
             if Path(corr_data_file3).exists():
                 if label3 == 'scLeft':
                     corr_data3 = float(np.load(corr_data_file3)[1]) * 1.73
