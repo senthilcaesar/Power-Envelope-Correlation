@@ -34,7 +34,6 @@ age = ['18to29',
        '60to69',
        '70to79',
        '80to88']
-
 for i, age_file in enumerate(age):
     cases = f'/home/senthilp/caesar/camcan/cc700/{age_file}.txt'
     subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
@@ -49,7 +48,7 @@ for i, age_file in enumerate(age):
             DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
             for val in freq:
                 corr_data_file = f'{subjects_dir}/{subject}/mne_files/{subject}_'\
-                                f'corr_ortho_{flag}_{spacing}_{val}_{label}.npy'
+                                f'corr_ortho_{flag}_{spacing}_{val}_{label}_check.npy'
                 if Path(corr_data_file).exists():
                     if label == 'scLeft':
                         corr_data = float(np.load(corr_data_file)[1]) * 1.73
@@ -131,4 +130,4 @@ ax3.legend(fontsize=8)
 ax3.grid(False)
 
 
-plt.savefig('/home/senthilp/Desktop/new_plot.png', dpi=600)
+plt.savefig('/home/senthilp/Desktop/new_plot_check.png', dpi=600)

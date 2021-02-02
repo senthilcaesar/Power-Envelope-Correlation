@@ -47,6 +47,24 @@ ROI_mni = {
     'SMA_MidBrain':[-2, 1, 51],
     }
 
+seed_left_sc = 0
+seed_right_sc = 1
+seed_left_ac = 2
+seed_right_ac = 3
+seed_left_vc = 4
+seed_right_vc = 5
+seed_left_mt = 6
+seed_right_mt = 7
+seed_left_mtl = 8
+seed_right_mtl = 9
+seed_left_smc = 10
+seed_right_smc = 11
+seed_left_lpc = 12
+seed_right_lpc = 13
+seed_left_dpfc = 14
+seed_right_dpfc = 15
+seed_left_tmpc = 16
+seed_right_tmpc = 17  
 
 freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 
@@ -179,20 +197,46 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     raw_cov_fname = f'{DATA_DIR}/{subject}-rawcov_{volume_spacing}.fif.gz'
     raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
     source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
-    corr_true_file_acLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_acLeft_128.npy'
-    corr_true_file_scLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_scLeft_128.npy'
-    corr_true_file_vcLeft_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vcLeft_128.npy'
-    corr_true_file_acRight_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_acRight_128.npy'
-    corr_true_file_scRight_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_scRight_128.npy'
-    corr_true_file_vcRight_wholebrain = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vcRight_128.npy'
+    corr_true_file_acLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_acLeft.npy'
+    corr_true_file_scLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_scLeft.npy'
+    corr_true_file_vcLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vcLeft.npy'
+    corr_true_file_mtLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_mtLeft.npy'
+    corr_true_file_mtlLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_mtlLeft.npy'
+    corr_true_file_smcLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_smcLeft.npy'
+    corr_true_file_lpcLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_lpcLeft.npy'
+    corr_true_file_dpfcLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_dpfcLeft.npy'
+    corr_true_file_tmpcLeft = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_tmpcLeft.npy'
+
+    corr_true_file_acRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_acRight.npy'
+    corr_true_file_scRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_scRight.npy'
+    corr_true_file_vcRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_vcRight.npy'
+    corr_true_file_mtRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_mtRight.npy'
+    corr_true_file_mtlRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_mtlRight.npy'
+    corr_true_file_smcRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_smcRight.npy'
+    corr_true_file_lpcRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_lpcRight.npy'
+    corr_true_file_dpfcRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_dpfcRight.npy'
+    corr_true_file_tmpcRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_tmpcRight.npy'
 
     check_for_files = []
-    check_for_files.append(corr_true_file_acLeft_wholebrain)
-    check_for_files.append(corr_true_file_scLeft_wholebrain)
-    check_for_files.append(corr_true_file_vcLeft_wholebrain)
-    check_for_files.append(corr_true_file_acRight_wholebrain)
-    check_for_files.append(corr_true_file_scRight_wholebrain)
-    check_for_files.append(corr_true_file_vcRight_wholebrain)
+    check_for_files.append(corr_true_file_acLeft)
+    check_for_files.append(corr_true_file_scLeft)
+    check_for_files.append(corr_true_file_vcLeft)
+    check_for_files.append(corr_true_file_mtLeft)
+    check_for_files.append(corr_true_file_mtlLeft)
+    check_for_files.append(corr_true_file_smcLeft)
+    check_for_files.append(corr_true_file_lpcLeft)
+    check_for_files.append(corr_true_file_dpfcLeft)
+    check_for_files.append(corr_true_file_tmpcLeft)
+
+    check_for_files.append(corr_true_file_acRight)
+    check_for_files.append(corr_true_file_scRight)
+    check_for_files.append(corr_true_file_vcRight)
+    check_for_files.append(corr_true_file_mtRight)
+    check_for_files.append(corr_true_file_mtlRight)
+    check_for_files.append(corr_true_file_smcRight)
+    check_for_files.append(corr_true_file_lpcRight)
+    check_for_files.append(corr_true_file_dpfcRight)
+    check_for_files.append(corr_true_file_tmpcRight)
 
     file_exist = [f for f in check_for_files if os.path.isfile(f)]
     file_not_exist = list(set(file_exist) ^ set(check_for_files))
@@ -226,6 +270,18 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
             seed_r_ac = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['AC_Right'])
             seed_l_vc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['VC_Left'])
             seed_r_vc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['VC_Right'])
+            seed_l_mt = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['MT+_Left'])
+            seed_r_mt = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['MT+_Right'])
+            seed_l_mtl = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['MTL_Left'])
+            seed_r_mtl = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['MTL_Right'])
+            seed_l_smc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['SMC_Left'])
+            seed_r_smc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['SMC_Right'])
+            seed_l_lpc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['LPC_Left'])
+            seed_r_lpc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['LPC_Right'])
+            seed_l_dpfc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['DPFC_Left'])
+            seed_r_dpfc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['DPFC_Right'])
+            seed_l_tmpc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['TMPC_Left'])
+            seed_r_tmpc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['TMPC_Right'])
             src_inuse = np.where(src[0]['inuse'] == 1)
             loc_l_sc = src_inuse[0][0]
             loc_r_sc = src_inuse[0][1]
@@ -233,12 +289,36 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
             loc_r_ac = src_inuse[0][3]
             loc_l_vc = src_inuse[0][4]
             loc_r_vc = src_inuse[0][5]
+            loc_l_mt = src_inuse[0][6]
+            loc_r_mt = src_inuse[0][7]
+            loc_l_mtl = src_inuse[0][8]
+            loc_r_mtl = src_inuse[0][9]
+            loc_l_smc = src_inuse[0][10]
+            loc_r_smc = src_inuse[0][11]
+            loc_l_lpc = src_inuse[0][12]
+            loc_r_lpc = src_inuse[0][13]
+            loc_l_dpfc = src_inuse[0][14]
+            loc_r_dpfc = src_inuse[0][15]
+            loc_l_tmpc = src_inuse[0][16]
+            loc_r_tmpc = src_inuse[0][17]
             src[0]['rr'][loc_l_sc] = seed_l_sc
             src[0]['rr'][loc_r_sc] = seed_r_sc
             src[0]['rr'][loc_l_ac] = seed_l_ac
             src[0]['rr'][loc_r_ac] = seed_r_ac
             src[0]['rr'][loc_l_vc] = seed_l_vc
             src[0]['rr'][loc_r_vc] = seed_r_vc
+            src[0]['rr'][loc_l_mt] = seed_l_mt
+            src[0]['rr'][loc_r_mt] = seed_r_mt
+            src[0]['rr'][loc_l_mtl] = seed_l_mtl
+            src[0]['rr'][loc_r_mtl] = seed_r_mtl
+            src[0]['rr'][loc_l_smc] = seed_l_smc
+            src[0]['rr'][loc_r_smc] = seed_r_smc
+            src[0]['rr'][loc_l_lpc] = seed_l_lpc
+            src[0]['rr'][loc_r_lpc] = seed_r_lpc
+            src[0]['rr'][loc_l_dpfc] = seed_l_dpfc
+            src[0]['rr'][loc_r_dpfc] = seed_r_dpfc
+            src[0]['rr'][loc_l_tmpc] = seed_l_tmpc
+            src[0]['rr'][loc_r_tmpc] = seed_r_tmpc
             src.save(src_fname, overwrite=True)
         src = mne.read_source_spaces(src_fname)
         #view_SS_brain(subject, subjects_dir, src)
@@ -285,7 +365,9 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
                 raw.info['projs'] += projs_eog2
             raw.apply_proj()
             raw.save(raw_proj, proj=True, overwrite=True)
+        print(raw_proj)
         raw_proj_applied = mne.io.read_raw_fif(raw_proj, verbose='error', preload=True)
+
 
         print(f'High-pass filtering data at 0.5 Hz')
         raw_proj_applied.filter(l_freq=0.5, h_freq=None, method='iir')
@@ -318,15 +400,6 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
             else:
                 data_cov = mne.read_cov(file_rawcov)
 
-
-        seed_left_sc = 0
-        seed_right_sc = 1
-        seed_left_ac = 2
-        seed_right_ac = 3
-        seed_left_vc = 4
-        seed_right_vc = 5
-        
-
         filters = make_lcmv(raw_proj_filtered.info, fwd, data_cov, 0.05, cov,
                             pick_ori='max-power', weight_norm='nai')
         raw_proj_filtered_comp = raw_proj_filtered.apply_hilbert()
@@ -342,13 +415,25 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
         all_corr = envelope_correlation(stcs, combine=None, orthogonalize="pairwise",
                     log=True, absolute=True, verbose=None)
 
-        np.save(corr_true_file_scLeft_wholebrain, all_corr[seed_left_sc])
-        np.save(corr_true_file_acLeft_wholebrain, all_corr[seed_left_ac])
-        np.save(corr_true_file_vcLeft_wholebrain, all_corr[seed_left_vc])
+        np.save(corr_true_file_scLeft, all_corr[seed_left_sc])
+        np.save(corr_true_file_acLeft, all_corr[seed_left_ac])
+        np.save(corr_true_file_vcLeft, all_corr[seed_left_vc])
+        np.save(corr_true_file_mtLeft, all_corr[seed_left_mt])
+        np.save(corr_true_file_mtlLeft, all_corr[seed_left_mtl])
+        np.save(corr_true_file_smcLeft, all_corr[seed_left_smc])
+        np.save(corr_true_file_lpcLeft, all_corr[seed_left_lpc])
+        np.save(corr_true_file_dpfcLeft, all_corr[seed_left_dpfc])
+        np.save(corr_true_file_tmpcLeft, all_corr[seed_left_tmpc])
 
-        np.save(corr_true_file_scRight_wholebrain, all_corr[seed_right_sc])
-        np.save(corr_true_file_acRight_wholebrain, all_corr[seed_right_ac])
-        np.save(corr_true_file_vcRight_wholebrain, all_corr[seed_right_vc])
+        np.save(corr_true_file_scRight, all_corr[seed_right_sc])
+        np.save(corr_true_file_acRight, all_corr[seed_right_ac])
+        np.save(corr_true_file_vcRight, all_corr[seed_right_vc])
+        np.save(corr_true_file_mtRight, all_corr[seed_right_mt])
+        np.save(corr_true_file_mtlRight, all_corr[seed_right_mtl])
+        np.save(corr_true_file_smcRight, all_corr[seed_right_smc])
+        np.save(corr_true_file_lpcRight, all_corr[seed_right_lpc])
+        np.save(corr_true_file_dpfcRight, all_corr[seed_right_dpfc])
+        np.save(corr_true_file_tmpcRight, all_corr[seed_right_tmpc])
 
         del stcs
 
