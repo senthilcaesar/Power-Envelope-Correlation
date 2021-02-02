@@ -1,7 +1,7 @@
 [user]
-	name = senthilcaesar@yahoo.co.in
-	email = senthilcaesar@gmail.com
-	password = sonyxperia
+	name = senthilcaesar
+	email = senthilcaesar@yahoo.co.in
+	password = sonyxperia$9
 [core]
 	editor = vim
 	autocrlf = input
