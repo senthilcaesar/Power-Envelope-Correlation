@@ -4,8 +4,6 @@ import os
 
 
 def set_num_threads(nt):
-    import mkl
-    mkl.set_num_threads(nt)
     nt = str(nt)
     os.environ["OMP_NUM_THREADS"] = nt         # export OMP_NUM_THREADS=1
     os.environ["OPENBLAS_NUM_THREADS"] = nt    # export OPENBLAS_NUM_THREADS=1
