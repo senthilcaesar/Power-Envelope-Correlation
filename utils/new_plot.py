@@ -76,7 +76,7 @@ for i, age_file in enumerate(age):
                     elif label == 'dpfcLeft':
                         corr_data = float(np.load(corr_data_file)[15]) * 1.73
                     elif label == 'tmpcLeft':
-                        corr_data = float(np.load(corr_data_file)[15]) * 1.73
+                        corr_data = float(np.load(corr_data_file)[17]) * 1.73
 
                     elif label == 'scRight':
                         corr_data = float(np.load(corr_data_file)[0]) * 1.73
