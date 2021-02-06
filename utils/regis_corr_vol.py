@@ -59,7 +59,7 @@ def apply_transform(case, freq, sensor):
     subdir = f'/home/senthilp/caesar/camcan/cc700/freesurfer_output'
     fsaverage = f'/home/senthilp/freesurfer/subjects/fsaverage/mri'
     input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr.nii.gz'
-    output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_antsWarped.nii.gz'
+    output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_7.8_antsWarped.nii.gz'
     trans_file_warp = f'{subdir}/trans/{case}_ants1Warp.nii.gz'
     trans_file_rigid = f'{subdir}/trans/{case}_ants0GenericAffine.mat'
     bash_cmd =  f'antsApplyTransforms -d 3 -i {input_file} -r {fsaverage}/brain.mgz -o {output_file} -t {trans_file_warp} -t {trans_file_rigid}'

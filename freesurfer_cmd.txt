@@ -1,0 +1,5 @@
+
+
+mri_vol2surf --src sub-CC110033_12_mtLeft_antsWarped.nii.gz --out test/lh.mgh --regheader fsaverage --hemi lh --inflated --trgsubject fsaverage
+
+freeview -f ${SUBJECTS_DIR}/fsaverage/surf/lh.inflated:overlay=path/to/mgh/lh.mgh
