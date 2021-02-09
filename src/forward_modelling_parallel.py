@@ -64,9 +64,11 @@ seed_right_lpc = 13
 seed_left_dpfc = 14
 seed_right_dpfc = 15
 seed_left_tmpc = 16
-seed_right_tmpc = 17  
+seed_right_tmpc = 17
+seed_mpfc_index = 18
+seed_sma_index = 19
 
-freqs = [12,] # 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 
 
 def convert(seconds): 
@@ -183,7 +185,7 @@ def num_threads(nt):
 
 def run_correlation(subjects_dir, subject, volume_spacing, freq):
 
-    num_threads(4)
+    num_threads(8)
     frequency = str(freq)
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     eye_proj1 = f'{DATA_DIR}/{subject}_eyes1-proj.fif.gz'
@@ -217,6 +219,9 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     corr_true_file_dpfcRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_dpfcRight.npy'
     corr_true_file_tmpcRight = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_tmpcRight.npy'
 
+    corr_true_file_mpfc = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_mpfc.npy'
+    corr_true_file_sma = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_sma.npy'
+
     check_for_files = []
     check_for_files.append(corr_true_file_acLeft)
     check_for_files.append(corr_true_file_scLeft)
@@ -237,6 +242,9 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
     check_for_files.append(corr_true_file_lpcRight)
     check_for_files.append(corr_true_file_dpfcRight)
     check_for_files.append(corr_true_file_tmpcRight)
+
+    check_for_files.append(corr_true_file_mpfc)
+    check_for_files.append(corr_true_file_sma)
 
     file_exist = [f for f in check_for_files if os.path.isfile(f)]
     file_not_exist = list(set(file_exist) ^ set(check_for_files))
@@ -282,6 +290,10 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
             seed_r_dpfc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['DPFC_Right'])
             seed_l_tmpc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['TMPC_Left'])
             seed_r_tmpc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['TMPC_Right'])
+
+            seed_mpfc = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['MPFC_MidBrain'])
+            seed_sma = MNI_to_MRI(subject, subjects_dir, t1, ROI_mni['SMA_MidBrain'])
+
             src_inuse = np.where(src[0]['inuse'] == 1)
             loc_l_sc = src_inuse[0][0]
             loc_r_sc = src_inuse[0][1]
@@ -301,6 +313,8 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
             loc_r_dpfc = src_inuse[0][15]
             loc_l_tmpc = src_inuse[0][16]
             loc_r_tmpc = src_inuse[0][17]
+            loc_mpfc = src_inuse[0][18]
+            loc_sma = src_inuse[0][19]
             src[0]['rr'][loc_l_sc] = seed_l_sc
             src[0]['rr'][loc_r_sc] = seed_r_sc
             src[0]['rr'][loc_l_ac] = seed_l_ac
@@ -319,6 +333,8 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
             src[0]['rr'][loc_r_dpfc] = seed_r_dpfc
             src[0]['rr'][loc_l_tmpc] = seed_l_tmpc
             src[0]['rr'][loc_r_tmpc] = seed_r_tmpc
+            src[0]['rr'][loc_mpfc] = seed_mpfc
+            src[0]['rr'][loc_sma] = seed_sma
             src.save(src_fname, overwrite=True)
         src = mne.read_source_spaces(src_fname)
         #view_SS_brain(subject, subjects_dir, src)
@@ -435,10 +451,13 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
         np.save(corr_true_file_dpfcRight, all_corr[seed_right_dpfc])
         np.save(corr_true_file_tmpcRight, all_corr[seed_right_tmpc])
 
+        np.save(corr_true_file_mpfc, all_corr[seed_mpfc_index])
+        np.save(corr_true_file_sma, all_corr[seed_sma_index])
+
         del stcs
 
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/1.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/full.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -448,7 +467,7 @@ def main():
     volume_spacing = 7.8
     for freq in freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=1)
+        pool = mp.Pool(processes=16)
         for subject in case_list:
             pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()

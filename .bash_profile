@@ -9,8 +9,8 @@ fi
 export PATH=~/anaconda3/bin:$PATH
 source /home/senthilp/anaconda3/bin/activate
 #export QT_DEBUG_PLUGINS=1
-export QT_PLUGIN_PATH=/home/senthilp/anaconda3/envs/mne/lib/python3.8/site-packages/PyQt5/Qt/plugins
-export LD_LIBRARY_PATH=/home/senthilp/anaconda3/envs/mne/lib/python3.8/site-packages/PyQt5/Qt/plugins
+#export QT_PLUGIN_PATH=/home/senthilp/anaconda3/envs/mne/lib/python3.8/site-packages/PyQt5/Qt/plugins
+#export LD_LIBRARY_PATH=/home/senthilp/anaconda3/envs/mne/lib/python3.8/site-packages/PyQt5/Qt/plugins
 
 # Git branch in prompt version 2
 parse_git_branch() {
@@ -25,7 +25,7 @@ export FREESURFER_HOME=/home/senthilp/freesurfer
 #export SUBJECTS_DIR=$FREESURFER_HOME/subjects
 export SUBJECTS_DIR=/home/senthilp/caesar/camcan/cc700/freesurfer_output
 source $FREESURFER_HOME/SetUpFreeSurfer.sh
-alias slicer='/home/senthilp/Slicer-4.10.2-linux-amd64/Slicer > /dev/null 2>&1 &'
+alias slicer='/home/senthilp/Slicer-4.11.20200930-linux-amd64/Slicer > /dev/null 2>&1 &'
 alias freeview='/home/senthilp/freesurfer/bin/freeview > /dev/null 2>&1 &'
 alias mem='ps -o pid,user,%mem,command ax | sort -b -k3 -r'
 # FSL Setup
