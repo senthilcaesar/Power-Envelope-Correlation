@@ -146,7 +146,7 @@ def set_num_threads(nt):
 
 def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
 
-        set_num_threads(10)
+        set_num_threads(4)
         sources = []
         src_space = mne.read_source_spaces(src_space)
         # lh_surf_coord = src_space[0]['rr']     					# Triangle Mesh coordinates
@@ -194,62 +194,6 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
             for i,j,k in neighbor:
                 img[i][j][k] = img[a1][b1][c1]
                                     
-        fill_slices = False
-        if fill_slices:
-            
-            #----------------- AXIAL----------------------------------#
-            pos_slice_axial = []
-            for i, slice in enumerate(img):
-                if np.sum(slice) > 15.0:
-                    pos_slice_axial.append(i)
-            for i, pos in enumerate(pos_slice_axial):
-                if i+1 == len(pos_slice_axial):break
-                val = pos_slice_axial[i+1] - pos     
-                if val == 3:
-                    img[pos+1] = img[pos]
-                    img[pos+2] = img[pos_slice_axial[i+1]]
-                if val == 2:
-                    img[pos+1] = img[pos]
-                    
-                
-            #------------------CORONAL-------------------------------#
-            img = np.swapaxes(img,0,1)
-            pos_slice_coronal = []
-            for i, slice in enumerate(img):
-                if np.sum(slice) > 15.0:
-                    pos_slice_coronal.append(i)
-            for i, pos in enumerate(pos_slice_coronal):
-                if i+1 == len(pos_slice_coronal): break
-                val = pos_slice_coronal[i+1] - pos
-                
-                if val == 3:
-                    img[pos+1] = img[pos]
-                    img[pos+2] = img[pos_slice_coronal[i+1]]       
-                if val == 2:
-                    img[pos+1] = img[pos]
-        
-                
-            img = np.swapaxes(img,1,0)
-                
-            #-------------------SAGITTAL-------------------------------#
-            img = np.swapaxes(img,0,2)
-            pos_slice_sagittal = []
-            for i, slice in enumerate(img):
-                if np.sum(slice) > 15.0:
-                    pos_slice_sagittal.append(i)
-            for i, pos in enumerate(pos_slice_sagittal):
-                if i+1 == len(pos_slice_sagittal): break
-            
-                val = pos_slice_sagittal[i+1] - pos
-    
-                if val == 3:
-                    img[pos+1] = img[pos]
-                    img[pos+2] = img[pos_slice_sagittal[i+1]]               
-                if val == 2:
-                    img[pos+1] = img[pos]
-                    
-            img = np.swapaxes(img,2,0)
-        
         #---------------------- Convolution Nearest Neighbor-------------------------#
         
         convolution = True
