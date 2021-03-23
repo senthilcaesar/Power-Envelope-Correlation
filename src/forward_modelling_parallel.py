@@ -68,7 +68,7 @@ seed_right_tmpc = 17
 seed_mpfc_index = 18
 seed_sma_index = 19
 
-freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+freqs = [2,] # 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 
 
 def convert(seconds): 
@@ -457,7 +457,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
         del stcs
 
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/full.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/missed.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -467,7 +467,7 @@ def main():
     volume_spacing = 7.8
     for freq in freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=12)
+        pool = mp.Pool(processes=1)
         for subject in case_list:
             pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()
