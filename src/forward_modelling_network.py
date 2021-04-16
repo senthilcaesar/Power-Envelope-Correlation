@@ -295,6 +295,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq):
         all_corr = envelope_correlation(label_ts, combine=None, orthogonalize="pairwise",
                     log=True, absolute=True, verbose=None)
 
+        print(f'Correlation saved to {corr_true_file_label}')
         np.save(corr_true_file_label, all_corr)
 
         del stcs
@@ -310,7 +311,7 @@ def main():
     volume_spacing = 7.8
     for freq in freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=12)
+        pool = mp.Pool(processes=15)
         for subject in case_list:
             pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()
