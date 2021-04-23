@@ -1,2 +1,3 @@
 grep -Fvf file2 file1
 nohup 2>&1 python forward_modelling.py &
+rsync -av senthilp@128.197.62.176:/home/senthilp/caesar/camcan/cc700/freesurfer_output/degree_avg .
