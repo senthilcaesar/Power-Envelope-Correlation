@@ -171,31 +171,31 @@ def create_volume(subjects_dir, subject, src_space, corr_file, corr_vol):
 
         # Fill neiboring voxels
 
-        fill_neighbor = False
+        fill_neighbor = True
         if fill_neighbor:
             found = np.argwhere(img > 0.0)
             for a1,b1,c1 in found:
                 neighbor = list(neighbors((a1, b1, c1)))
                 for i,j,k in neighbor:
-                    img[i][j][k] = sys.float_info.epsilon #img[a1][b1][c1]
+                    img[i][j][k] = img[a1][b1][c1]
             
             found = np.argwhere(img > 0.0)
             for a1,b1,c1 in found:
                 neighbor = list(neighbors((a1, b1, c1)))
                 for i,j,k in neighbor:
-                    img[i][j][k] = sys.float_info.epsilon #img[a1][b1][c1]
+                    img[i][j][k] = img[a1][b1][c1]
             
             found = np.argwhere(img > 0.0)
             for a1,b1,c1 in found:
                 neighbor = list(neighbors((a1, b1, c1)))
                 for i,j,k in neighbor:
-                    img[i][j][k] = sys.float_info.epsilon #img[a1][b1][c1]
+                    img[i][j][k] = img[a1][b1][c1]
 
             found = np.argwhere(img > 0.0)
             for a1,b1,c1 in found:
                 neighbor = list(neighbors((a1, b1, c1)))
                 for i,j,k in neighbor:
-                    img[i][j][k] = sys.float_info.epsilon #img[a1][b1][c1]
+                    img[i][j][k] = img[a1][b1][c1]
                                     
         #---------------------- Convolution Nearest Neighbor-------------------------#
         
@@ -268,8 +268,10 @@ if __name__ == '__main__':
             for main_idx, case in enumerate(case_list):
                 subject = case
                 src_space_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{spacing}-fwd.fif.gz'
-                corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_corr_ortho_{flag}_{spacing}_{freq}-{label}.npy'
-                stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_{label}_corr_{label}.nii.gz'
+                #corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_corr_ortho_{flag}_{spacing}_{freq}_{label}.npy'
+
+                corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_{label}_{spacing}_{freq}.npy'
+                stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_corr_{label}.nii.gz'
                 subject_list.append(subject)
                 srcspace_list.append(src_space_fname)
                 corr_list.append(corr_file)

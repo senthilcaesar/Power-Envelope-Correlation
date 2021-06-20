@@ -32,7 +32,7 @@ def non_linear_registration(case, freq, sensor):
     subprocess.check_output(bash_cmd, shell=True)
 
 
-def apply_transform(case, freq, sensor):
+def apply_transform(case, freq, sensor, flag):
 
     '''
     antsApplyTransforms: Usage
@@ -55,11 +55,11 @@ def apply_transform(case, freq, sensor):
      -t, --transform transformFileName
 
      '''
-    
+    flag = str(flag)
     subdir = f'/home/senthilp/caesar/camcan/cc700/freesurfer_output'
     fsaverage = f'/home/senthilp/freesurfer/subjects/fsaverage/mri'
-    input_file = f'{subdir}/{case}/mne_files/{case}_true_7.8_{freq}_{sensor}_corr_{sensor}.nii.gz'
-    output_file = f'{subdir}/{case}/mne_files/{case}_{freq}_{sensor}_7.8_{sensor}_antsWarped.nii.gz'
+    input_file = f'{subdir}/{case}/mne_files/{case}_{flag}_7.8_{freq}_corr_{sensor}.nii.gz'
+    output_file = f'{subdir}/{case}/mne_files/{case}_{flag}_7.8_{freq}_corr_{sensor}_antsWarped.nii.gz'
     trans_file_warp = f'{subdir}/trans/{case}_ants1Warp.nii.gz'
     trans_file_rigid = f'{subdir}/trans/{case}_ants0GenericAffine.mat'
 
@@ -93,6 +93,6 @@ if __name__ == '__main__':
             pool = mp.Pool(processes=njobs)
             for index, subject in enumerate(case_list):
                 #pool.apply_async(non_linear_registration, args=[subject, freq, label])
-                pool.apply_async(apply_transform, args=[subject, freq, label])
+                pool.apply_async(apply_transform, args=[subject, freq, label, False])
             pool.close()
             pool.join()

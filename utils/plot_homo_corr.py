@@ -2,7 +2,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to30.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to29.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 flag = 'true'
 with open(cases) as f:
@@ -24,7 +24,7 @@ for label in sensory_mean:
         DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
         for val in freq:
             corr_data_file = f'{subjects_dir}/{subject}/mne_files/{subject}_'\
-                            f'corr_ortho_{flag}_{spacing}_{val}_{label}_wholebrain.npy'
+                            f'corr_ortho_{flag}_{spacing}_{val}_{label}.npy'
             if Path(corr_data_file).exists():
                 if label == 'scLeft':
                     corr_data = float(np.load(corr_data_file)[1]) * 1.73
@@ -98,7 +98,7 @@ ax.set_xlabel('Carrier frequency (Hz)', fontsize=4)
 ax.set_ylabel('Correlation', fontsize=4)
 ax.set_title(f'Correlation between orthogonalized '
               f'spontaneous signals from homologous early ' 
-              f'sensory areas - 72 subjects, age (18-30)', fontsize=4)
+              f'sensory areas - 67 subjects, age (18-29)', fontsize=4)
 ax.legend(fontsize=8)
 ax.grid(False)
-plt.savefig('/home/senthilp/Desktop/correlation_72_raw.png', dpi=600)
+plt.savefig('/home/senthilp/Desktop/young.png', dpi=600)
