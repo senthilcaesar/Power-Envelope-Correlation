@@ -10,7 +10,7 @@ def run_degreeMapping(subjects_dir, subject, volume_spacing, freq):
     frequency = str(freq)
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     fwd_fname = f'{DATA_DIR}/{subject}_{volume_spacing}-fwd-label.fif.gz'
-    label_degree = f'{DATA_DIR}/{subject}_degreeMasked_{volume_spacing}_{frequency}-label.npy'
+    label_degree = f'{DATA_DIR}/{subject}_degreeMasked_{volume_spacing}_{frequency}.npy'
     degree_mapped = f'{DATA_DIR}/{subject}_degreeMapped_{volume_spacing}_{frequency}.npy'
     degree = np.load(label_degree)
     degree = np.sum(degree > 0, axis=0)

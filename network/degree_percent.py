@@ -53,8 +53,7 @@ for subject in case_list:
     sub_btw = []
 
     for i, degree in enumerate(norm_degree):
-
-        masked_degree = f'{DATA_DIR}/{subject}_degreeMasked_{volume_spacing}_{freqs[i]}-label.npy'
+        masked_degree = f'{DATA_DIR}/{subject}_degreeMasked_{volume_spacing}_{freqs[i]}.npy'
 
         q = len(degree)
 
