@@ -268,10 +268,8 @@ if __name__ == '__main__':
             for main_idx, case in enumerate(case_list):
                 subject = case
                 src_space_fname = f'{subjects_dir}/{subject}/mne_files/{subject}_{spacing}-fwd.fif.gz'
-                #corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_corr_ortho_{flag}_{spacing}_{freq}_{label}.npy'
-
-                corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_{label}_{spacing}_{freq}.npy'
-                stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_corr_{label}.nii.gz'
+                corr_file = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_{label}.npy'
+                stat_img = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_{spacing}_{freq}_{label}.nii.gz'
                 subject_list.append(subject)
                 srcspace_list.append(src_space_fname)
                 corr_list.append(corr_file)

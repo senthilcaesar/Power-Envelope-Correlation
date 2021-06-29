@@ -2,7 +2,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to29.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/80to88.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 flag = 'true'
 with open(cases) as f:
@@ -98,7 +98,7 @@ ax.set_xlabel('Carrier frequency (Hz)', fontsize=4)
 ax.set_ylabel('Correlation', fontsize=4)
 ax.set_title(f'Correlation between orthogonalized '
               f'spontaneous signals from homologous early ' 
-              f'sensory areas - 67 subjects, age (18-29)', fontsize=4)
+              f'sensory areas - age (80-88)', fontsize=4)
 ax.legend(fontsize=8)
 ax.grid(False)
-plt.savefig('/home/senthilp/Desktop/young.png', dpi=600)
+plt.savefig('/home/senthilp/Desktop/80to88.png', dpi=600)

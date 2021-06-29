@@ -25,8 +25,8 @@ def run_degreeMapping(subjects_dir, subject, volume_spacing, freq):
     np.save(degree_mapped, degree_values)
 
 
-freqs = [16,]
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to29.txt'
+freqs = [12,]
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/full.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -36,7 +36,7 @@ def main():
     volume_spacing = 7.8
     for freq in freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=15)
+        pool = mp.Pool(processes=20)
         for subject in case_list:
             pool.apply_async(run_degreeMapping, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()

@@ -68,7 +68,7 @@ seed_right_tmpc = 17
 seed_mpfc_index = 18
 seed_sma_index = 19
 
-freqs = [16,] # 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+freqs = [12,] # 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 
 
 def convert(seconds): 
@@ -201,28 +201,28 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq, ortho_bool):
     raw_cov_fname = f'{DATA_DIR}/{subject}-rawcov_{volume_spacing}.fif.gz'
     raw_proj = f'{DATA_DIR}/{subject}_ses-rest_task-rest_proj.fif.gz'
     source_voxel_coords = f'{DATA_DIR}/{subject}_coords_{volume_spacing}.pkl'
-    corr_file_acLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_acLeft.npy'
-    corr_file_scLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_scLeft.npy'
-    corr_file_vcLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_vcLeft.npy'
-    corr_file_mtLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_mtLeft.npy'
-    corr_file_mtlLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_mtlLeft.npy'
-    corr_file_smcLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_smcLeft.npy'
-    corr_file_lpcLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_lpcLeft.npy'
-    corr_file_dpfcLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_dpfcLeft.npy'
-    corr_file_tmpcLeft = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_tmpcLeft.npy'
+    corr_file_acLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_acLeft.npy'
+    corr_file_scLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_scLeft.npy'
+    corr_file_vcLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_vcLeft.npy'
+    corr_file_mtLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_mtLeft.npy'
+    corr_file_mtlLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_mtlLeft.npy'
+    corr_file_smcLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_smcLeft.npy'
+    corr_file_lpcLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_lpcLeft.npy'
+    corr_file_dpfcLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_dpfcLeft.npy'
+    corr_file_tmpcLeft = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_tmpcLeft.npy'
 
-    corr_file_acRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_acRight.npy'
-    corr_file_scRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_scRight.npy'
-    corr_file_vcRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_vcRight.npy'
-    corr_file_mtRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_mtRight.npy'
-    corr_file_mtlRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_mtlRight.npy'
-    corr_file_smcRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_smcRight.npy'
-    corr_file_lpcRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_lpcRight.npy'
-    corr_file_dpfcRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_dpfcRight.npy'
-    corr_file_tmpcRight = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_tmpcRight.npy'
+    corr_file_acRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_acRight.npy'
+    corr_file_scRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_scRight.npy'
+    corr_file_vcRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_vcRight.npy'
+    corr_file_mtRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_mtRight.npy'
+    corr_file_mtlRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_mtlRight.npy'
+    corr_file_smcRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_smcRight.npy'
+    corr_file_lpcRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_lpcRight.npy'
+    corr_file_dpfcRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_dpfcRight.npy'
+    corr_file_tmpcRight = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_tmpcRight.npy'
 
-    corr_file_mpfc = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_mpfc.npy'
-    corr_file_sma = f'{DATA_DIR}/{subject}_corr_ortho_{ortho_flag}_{volume_spacing}_{frequency}_sma.npy'
+    corr_file_mpfc = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_mpfc.npy'
+    corr_file_sma = f'{DATA_DIR}/{subject}_{ortho_flag}_{volume_spacing}_{frequency}_sma.npy'
 
     check_for_files = []
     check_for_files.append(corr_file_acLeft)
@@ -460,7 +460,7 @@ def run_correlation(subjects_dir, subject, volume_spacing, freq, ortho_bool):
         del stcs
 
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to29.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/full.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -470,7 +470,7 @@ def main():
     volume_spacing = 7.8
     for freq in freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=15)
+        pool = mp.Pool(processes=20)
         for subject in case_list:
             pool.apply_async(run_correlation, args=[subjects_dir, subject, volume_spacing, freq, False])
         pool.close()

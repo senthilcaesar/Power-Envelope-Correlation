@@ -38,14 +38,14 @@ if __name__ == '__main__':
             for i, subject in enumerate(case_list):
                 print(subject, ' ' , i)
                 DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
-                corr_data_warp = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_7.8_{freq}_corr_{label}_antsWarped.nii.gz'
+                corr_data_warp = f'{subjects_dir}/{subject}/mne_files/{subject}_{flag}_7.8_{freq}_{label}_antsWarped.nii.gz'
                 if os.path.isfile(corr_data_warp):
                     count += 1
                     data_npy = nib.load(corr_data_warp).get_fdata()
                     np.add(subjs_corr, data_npy, out=subjs_corr)
             np.divide(subjs_corr, count, out=subjs_corr)
-            #np.multiply(subjs_corr, 1.73, out=subjs_corr)
-            output = f'{subjects_dir}/average/18to29_avg/{case_name}_{flag}_{freq}_{label}.nii.gz'
+            np.multiply(subjs_corr, 1.73, out=subjs_corr)
+            output = f'{subjects_dir}/average/{case_name}_{flag}_{freq}_{label}.nii.gz'
             result_img = nib.Nifti1Image(subjs_corr, affine, header=hdr)
             result_img.to_filename(output)
             print(output)

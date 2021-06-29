@@ -11,7 +11,7 @@ from sklearn import preprocessing
 freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 glob_deg_list = []
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to29.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/80to88.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -86,12 +86,12 @@ for subject in case_list:
 
         np.save(masked_degree, masked)
         print(masked_degree)
-        G = nx.from_numpy_array(masked, create_using=nx.DiGraph)
-        btw = nx.betweenness_centrality(G, normalized=True)
-        btw_lst = list(btw.values())
-        btw_arr = np.array(btw_lst)
-        likely = np.mean(btw_arr) + (1.96 * np.std(btw_arr))
-        btw_sig = np.sum(btw_arr > likely)
+        #G = nx.from_numpy_array(masked, create_using=nx.DiGraph)
+        #btw = nx.betweenness_centrality(G, normalized=True)
+        #btw_lst = list(btw.values())
+        #btw_arr = np.array(btw_lst)
+        #likely = np.mean(btw_arr) + (1.96 * np.std(btw_arr))
+        #btw_sig = np.sum(btw_arr > likely)
 
 
         global_degree = np.sum(masked)
@@ -102,15 +102,15 @@ for subject in case_list:
 
         sub_avg.append(degree_global_percent)
 
-        cal2 = btw_sig/degree.shape[0]
-        btw_global_percent = np.round((cal2*100),2)
-        sub_btw.append(btw_global_percent)
+        #cal2 = btw_sig/degree.shape[0]
+        #btw_global_percent = np.round((cal2*100),2)
+        #sub_btw.append(btw_global_percent)
 
         print(f'Frequency: {freqs[i]} | degree: {degree_global_percent}%')
     output.append(sub_avg)
-    output_btw.append(sub_btw)
+    #output_btw.append(sub_btw)
 
 avg = [float(sum(col))/len(col) for col in zip(*output)]
-avg_btw = [float(sum(col))/len(col) for col in zip(*output_btw)]
+#avg_btw = [float(sum(col))/len(col) for col in zip(*output_btw)]
 print(avg)
-print(avg_btw)
+#print(avg_btw)

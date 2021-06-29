@@ -58,8 +58,8 @@ def apply_transform(case, freq, sensor, flag):
     flag = str(flag)
     subdir = f'/home/senthilp/caesar/camcan/cc700/freesurfer_output'
     fsaverage = f'/home/senthilp/freesurfer/subjects/fsaverage/mri'
-    input_file = f'{subdir}/{case}/mne_files/{case}_{flag}_7.8_{freq}_corr_{sensor}.nii.gz'
-    output_file = f'{subdir}/{case}/mne_files/{case}_{flag}_7.8_{freq}_corr_{sensor}_antsWarped.nii.gz'
+    input_file = f'{subdir}/{case}/mne_files/{case}_{flag}_7.8_{freq}_{sensor}.nii.gz'
+    output_file = f'{subdir}/{case}/mne_files/{case}_{flag}_7.8_{freq}_{sensor}_antsWarped.nii.gz'
     trans_file_warp = f'{subdir}/trans/{case}_ants1Warp.nii.gz'
     trans_file_rigid = f'{subdir}/trans/{case}_ants0GenericAffine.mat'
 
