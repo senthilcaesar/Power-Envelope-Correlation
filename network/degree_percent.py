@@ -11,7 +11,7 @@ from sklearn import preprocessing
 freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 glob_deg_list = []
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/80to88.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/full.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -28,7 +28,7 @@ for subject in case_list:
     DATA_DIR = Path(f'{subjects_dir}', f'{subject}', 'mne_files')
     big = np.zeros((0,190,190))
     for i, frequency in enumerate(freqs):
-        label_corr = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}-label.npy'
+        label_corr = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_label.npy'
         corr = np.load(label_corr)
 
         if corr.shape[1] == 190:

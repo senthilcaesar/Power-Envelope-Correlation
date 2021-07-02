@@ -1,7 +1,6 @@
 import numpy as np
 import multiprocessing as mp
 import subprocess
-from settings import Settings
 
 
 def non_linear_registration(case, freq, label, spacing):
@@ -55,7 +54,6 @@ def apply_transform(case, freq, label, spacing):
      -t, --transform transformFileName
 
      '''
-    flag = str(flag)
     subdir = f'/home/senthilp/caesar/camcan/cc700/freesurfer_output'
     fsaverage = f'/home/senthilp/freesurfer/subjects/fsaverage/mri'
     input_file = f'{subdir}/{case}/mne_files/{case}_{label}_{spacing}_{freq}.nii.gz'
@@ -76,11 +74,12 @@ if __name__ == '__main__':
     spacing = '7.8'
     freqs = [12,]
     sensor = ['degreeMapped',]
-    njobs = 20
+    njobs = 15
 
     
     with open(cases) as f:
         case_list = f.read().splitlines()
+
     for freq in freqs:
         for label in sensor:
             pool = mp.Pool(processes=njobs)

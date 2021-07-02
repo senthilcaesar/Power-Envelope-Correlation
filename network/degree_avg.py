@@ -2,13 +2,12 @@ import numpy as np
 from pathlib import Path
 import nibabel as nib
 import os
-from settings import Settings
 import os.path
 
 
 if __name__ == '__main__':
 
-    cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to29.txt'
+    cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/80to88.txt'
     subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
     spacing = '7.8'
     freqs = [12,]
