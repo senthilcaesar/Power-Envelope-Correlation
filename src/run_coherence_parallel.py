@@ -343,7 +343,7 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
 
 log_range = np.arange(2,7.25,0.25)
 carrier_freqs = [math.pow(2,val) for val in log_range]
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to30.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/remain.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
