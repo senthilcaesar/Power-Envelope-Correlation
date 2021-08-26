@@ -125,6 +125,7 @@ def envelope_correlation(data, combine='mean', orthogonalize="pairwise",
         data_mag_std = np.linalg.norm(data_mag_nomean, axis=-1)
         data_mag_std[data_mag_std == 0] = 1
         corr = np.empty((n_nodes, n_nodes))
+
         for li, label_data in enumerate(epoch_data):
             if orthogonalize is False:  # the new code
                 label_data_orth = data_mag[li]
@@ -148,7 +149,7 @@ def envelope_correlation(data, combine='mean', orthogonalize="pairwise",
             corr[li] /= data_mag_std
             corr[li] /= label_data_orth_std
 
-            if li == 19: break
+            #if li == 19: break
 
         if orthogonalize is not False:
             # Make it symmetric (it isn't at this point)
@@ -159,5 +160,5 @@ def envelope_correlation(data, combine='mean', orthogonalize="pairwise",
         del corr
 
     corr = fun(corrs)
-    return corr[0][0:20]
-    #return corr
+    #return corr[0][0:20]
+    return corr
