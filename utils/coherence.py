@@ -28,7 +28,6 @@ def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
         se_data == used adaptive linear spatial filtering (beamforming)
         to estimate the spectral amplitude and phase of neuronal signals at the source
         level   
-
         Example:
         seed_l = Index of Left somatosensory cortex source estimate data
         seed_r = Index of Right somatosensory cortex source estimate data
@@ -36,18 +35,17 @@ def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
         se_data = se_data.data[[seed_l,seed_r]].copy()
 
         # logarithm of the squared amplitude envelopes (power envelopes)
-        data_mag = np.square(np.log(np.abs(se_data)))
+        data_squared = np.abs(se_data) * np.abs(se_data)
+        data_mag = np.log(data_squared)
     
-        log_range = np.arange(-1.5,1.1,0.1)
+        log_range = np.arange(-2.0,1.1,0.1)
         covar_freqs = [math.pow(10,val) for val in log_range]
         '''
         We chose a spectral bandwidth of (σf = f * 3.15) and spaced the center frequencies log-
         arithmically according to the exponentiation of the base 10 with exponents ranging from −1.5 in steps of 0.1
-
         We derived spectral estimates in successive half-overlapping temporal windows that cov-
         ered ±3 σ t . From these complex numbers, we derived the coherency between power envelopes and 
         took the real part of coherency as the frequency-specific measure of correlation
-
         '''
         covar_freq_list = []
         sfreq = 1000
@@ -57,11 +55,12 @@ def envelope_coherence(se_data, seed_l, seed_r, fmin, fmax):
             spectral_estimate = cwt(data_mag, wvlt)
             spectral_estimate = spectral_estimate[:,0,:]
 
-            power_envelope = np.square(np.log(np.abs(spectral_estimate)))
+            spectral_estimate_squared = np.abs(spectral_estimate) * np.abs(spectral_estimate)
+            power_envelope = np.log(spectral_estimate_squared)
             power_envelope = power_envelope[np.newaxis,:,:]
 
             coherency, freqs, times, n_epochs, n_tapers = spectral_connectivity(
-                power_envelope, fmin=fmin, fmax=fmax, method='cohy',faverage=True, sfreq=sfreq, n_jobs=4)
+                power_envelope, fmin=freq, fmax=freq+0.5, method='cohy',faverage=True, sfreq=sfreq, n_jobs=4)
             
             coherence_corr = np.real(coherency)
             coherence_corr = coherence_corr[1,:,:][0]

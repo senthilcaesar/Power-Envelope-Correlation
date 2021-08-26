@@ -11,7 +11,7 @@ from sklearn import preprocessing
 freqs = [2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
 glob_deg_list = []
 
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/full.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/30to39.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -29,6 +29,7 @@ for subject in case_list:
     big = np.zeros((0,190,190))
     for i, frequency in enumerate(freqs):
         label_corr = f'{DATA_DIR}/{subject}_corr_ortho_true_{volume_spacing}_{frequency}_label.npy'
+        #print(label_corr)
         corr = np.load(label_corr)
 
         if corr.shape[1] == 190:
@@ -42,17 +43,17 @@ for subject in case_list:
             big = np.append(big, degree, axis=0)
 
     
-    img = big.copy()
-    new_img = img.reshape((img.shape[0]*img.shape[1]), img.shape[2])
-    new_img = new_img.transpose()
-    normalized_arr = preprocessing.normalize(new_img, norm='l2')
-    norm_degree = normalized_arr.reshape(13,190,190)
+    #img = big.copy()
+    #new_img = img.reshape((img.shape[0]*img.shape[1]), img.shape[2])
+    #new_img = new_img.transpose()
+    #normalized_arr = preprocessing.normalize(new_img, norm='l2')
+    #norm_degree = normalized_arr.reshape(13,190,190)
 
 
     sub_avg = []
     sub_btw = []
 
-    for i, degree in enumerate(norm_degree):
+    for i, degree in enumerate(big):
         masked_degree = f'{DATA_DIR}/{subject}_degreeMasked_{volume_spacing}_{freqs[i]}.npy'
 
         q = len(degree)
@@ -72,10 +73,10 @@ for subject in case_list:
                 signal_two = big[i][y,x]
 
 
-                signi_mean = (src_1_avg + src_2_avg) / 2
-                signi_std = (src_1_std + src_2_std) / 2
+                #signi_mean = (src_1_avg + src_2_avg) / 2
+                #signi_std = (src_1_std + src_2_std) / 2
 
-                away = signi_mean + (1.96 * signi_std)
+                away = 0.05 #signi_mean + (1.96 * signi_std)
 
                 if signal_one > away:
                     masked[x,y] = 1
@@ -84,7 +85,7 @@ for subject in case_list:
 
 
         np.save(masked_degree, masked)
-        print(masked_degree)
+        #print(masked_degree)
         #G = nx.from_numpy_array(masked, create_using=nx.DiGraph)
         #btw = nx.betweenness_centrality(G, normalized=True)
         #btw_lst = list(btw.values())

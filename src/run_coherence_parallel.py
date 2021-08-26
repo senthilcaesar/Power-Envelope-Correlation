@@ -326,24 +326,24 @@ def run_coherence(subjects_dir, subject, volume_spacing, freq):
         stcs = apply_lcmv_raw(raw_proj_filtered_comp, filters, verbose=True)
     
     print(f'Computing coherence for {subject}....')
-    if not file_sc.exists():
-        coh_sc = envelope_coherence(stcs, seed_l=seed_left_sc, seed_r=seed_right_sc, fmin=l_freq, fmax=h_freq)
-        np.save(coherence_file_sc, coh_sc)
-        print(coherence_file_sc)
-    if not file_ac.exists():
-        coh_ac = envelope_coherence(stcs, seed_l=seed_left_ac, seed_r=seed_right_ac, fmin=l_freq, fmax=h_freq)
-        np.save(coherence_file_ac, coh_ac)
-        print(coherence_file_ac)
-    if not file_vc.exists():
-        coh_vc = envelope_coherence(stcs, seed_l=seed_left_vc, seed_r=seed_right_vc, fmin=l_freq, fmax=h_freq)
-        np.save(coherence_file_vc, coh_vc)
-        print(coherence_file_vc)
+    #if not file_sc.exists():
+    coh_sc = envelope_coherence(stcs, seed_l=seed_left_sc, seed_r=seed_right_sc, fmin=l_freq, fmax=h_freq)
+    np.save(coherence_file_sc, coh_sc)
+    print(coherence_file_sc)
+    #if not file_ac.exists():
+    coh_ac = envelope_coherence(stcs, seed_l=seed_left_ac, seed_r=seed_right_ac, fmin=l_freq, fmax=h_freq)
+    np.save(coherence_file_ac, coh_ac)
+    print(coherence_file_ac)
+    #if not file_vc.exists():
+    coh_vc = envelope_coherence(stcs, seed_l=seed_left_vc, seed_r=seed_right_vc, fmin=l_freq, fmax=h_freq)
+    np.save(coherence_file_vc, coh_vc)
+    print(coherence_file_vc)
     del stcs
 
 
 log_range = np.arange(2,7.25,0.25)
 carrier_freqs = [math.pow(2,val) for val in log_range]
-cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/remain.txt'
+cases = '/home/senthilp/caesar/camcan/cc700/freesurfer_output/18to29.txt'
 subjects_dir = '/home/senthilp/caesar/camcan/cc700/freesurfer_output'
 with open(cases) as f:
      case_list = f.read().splitlines()
@@ -353,7 +353,7 @@ def main():
     volume_spacing = 30
     for freq in carrier_freqs:
         print(f'Data filtered at frequency {str(freq)} Hz...')
-        pool = mp.Pool(processes=15)
+        pool = mp.Pool(processes=16)
         for subject in case_list:
             pool.apply_async(run_coherence, args=[subjects_dir, subject, volume_spacing, freq])
         pool.close()
