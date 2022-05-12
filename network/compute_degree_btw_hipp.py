@@ -7,6 +7,7 @@ connectivity=np.load('/Users/sxp116/Downloads/shen_corr_5Hz_lcmv.npy')
 connectivity = np.array(connectivity)
 result = np.zeros((connectivity.shape))
 total_connection = len(connectivity) - 1
+n = 210
 
 for i, row in enumerate(connectivity):
         
@@ -33,3 +34,12 @@ degree_avg = degree_count / total_connection
 G = nx.from_numpy_array(result, create_using=nx.DiGraph)
 btw = nx.betweenness_centrality(G, normalized=True)
 btw_npy = np.array(list(btw.values()))
+
+# Shortest path average
+all_pairs = nx.floyd_warshall(G)
+s = [sum(t.values()) for t in all_pairs.values()]
+short_path_avg = np.array(s)/n
+
+# Cluster
+cluster_coeff = list(nx.clustering(G).values())
+cluster_coeff = np.array(cluster_coeff)
