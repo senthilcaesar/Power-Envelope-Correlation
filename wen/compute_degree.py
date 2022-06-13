@@ -45,11 +45,15 @@ for sub in case_list:
     np.save(f'{save_dir}/{sub}_btw.npy', btw_npy)
 
     # Shortest path average
+    short_path_avg = []
     all_pairs = nx.floyd_warshall(G)
-    s = [sum(t.values()) for t in all_pairs.values()]
-    short_path_avg = np.array(s)/n
-    sp_count = sp_count + short_path_avg
-    np.save(f'{save_dir}/{sub}_sp.npy', short_path_avg)
+    for t in all_pairs.values():
+        node = np.array(list(t.values()))
+        arr_inf = sum(~np.isinf(node))
+        arr_sum = sum(node[~np.isinf(node)])
+        arr_avg = arr_sum / arr_inf
+        short_path_avg.append(arr_avg)
+    short_path_avg = np.array(short_path_avg)
 
     # Cluster
     cluster_coeff = list(nx.clustering(G).values())
