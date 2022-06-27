@@ -43,7 +43,7 @@ module_partition = g.to_dict()
 module_partition = without_keys(module_partition,[6,10,13,14]) # Ignore systems
 
 # Load correlation
-fname = '/Users/senthilp/Downloads/20_power_corr_4Hz_lcmv.npy'
+fname = '/Users/senthilp/Downloads/power_corr_4Hz_lcmv.npy'
 corr = np.load(fname)
 AM = adjacency_matrix(corr)
 G = nx.from_numpy_array(AM, create_using=nx.DiGraph)
