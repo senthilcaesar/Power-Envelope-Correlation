@@ -40,7 +40,7 @@ df['label'] = df['label'].str.rstrip('_')
 df['ID'] = df['ID'] - 1
 g = df.groupby('Network')['ID'].apply(lambda x: list(np.unique(x)))
 module_partition = g.to_dict()
-module_partition = without_keys(module_partition,[5,9,12,13]) # Ignore systems
+module_partition = without_keys(module_partition,[5,9,12,13]) # Ignore systems [6,10,13,14]. Note: In Python Index starts at 0.
 
 # Load correlation
 fname = '/Users/senthilp/Downloads/power_corr_4Hz_lcmv.npy'
