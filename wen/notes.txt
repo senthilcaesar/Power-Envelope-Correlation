@@ -2,3 +2,4 @@
 2. Volume to label ( mri_cor2label --c lh.shen_mapped_array.avgMapping_allSub_RF_ANTs_MNI152_orig_to_fsaverage.nii.gz --id 1 --l 1.label --surf fsaverage lh )
 3. Label to annot ( mris_label2annot --s fsaverage --h lh --ctab FreeSurferColorLUT.txt --a 1 --l 1.label ) 
 4. mri_annotation2label --subject fsaverage --hemi lh --ctab /Applications/freesurfer/7.1.1/average/FreeSurferColorLUT.txt --labelbase lh.power.annot --surface inflated --annotation /Applications/freesurfer/7.1.1/subjects/fsaverage/label/lh.aparc.a2009s.annot
+mri_annotation2label --subject fsaverage --hemi lh --labelbase lh.power.annot --surface inflated --ctab lh.power_colortab.txt --annotation lh.power.annot
