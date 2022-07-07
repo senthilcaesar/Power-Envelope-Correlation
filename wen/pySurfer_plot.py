@@ -1,7 +1,6 @@
 import os
 from surfer import Brain
 from mayavi import mlab
-from IPython.display import Image
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.image as mpimg
@@ -19,16 +18,9 @@ labels = ["MF", "FP", "DMN", "MOT", "VI", "VII", "VAs", "SAL", "SC", "CBL"]
 colors = ['#4682b4', '#f5f5f5', '#cd3e4e', '#781286', '#f27efa', '#46f2f4', '#dcf8a4', '#e69422', '#fcff2b', '#00760e']
 
 # Add labels to brain surface
-brain.add_label(labels[0], borders=True, hemi='lh', color=colors[0])
-brain.add_label(labels[1], borders=True, hemi='lh', color=colors[1])
-brain.add_label(labels[2], borders=True, hemi='lh', color=colors[2])
-brain.add_label(labels[3], borders=True, hemi='lh', color=colors[3])
-brain.add_label(labels[4], borders=True, hemi='lh', color=colors[4])
-brain.add_label(labels[5], borders=True, hemi='lh', color=colors[5])
-brain.add_label(labels[6], borders=True, hemi='lh', color=colors[6])
-brain.add_label(labels[7], borders=True, hemi='lh', color=colors[7])
-brain.add_label(labels[8], borders=True, hemi='lh', color=colors[8])
-brain.add_label(labels[9], borders=True, hemi='lh', color=colors[9])
+for i in range(len(labels)):
+    brain.add_label(labels[i], borders=True, hemi='lh', color=colors[i])
+    
 brain.add_overlay(overlay_file, min=0.35, max=0.4, name="overlay_file") # Change MIN, MAX value here
 brain.overlays["overlay_file"].pos_bar.lut_mode = "autumn"
 mlab.savefig('/Users/senthilp/Desktop/degree_avg.jpg',size=(2000, 2000))
