@@ -1,0 +1,25 @@
+source /Users/senthilp/opt/anaconda3/bin/activate /Users/senthilp/opt/anaconda3
+#source /Users/senthilp/gitautocomplete/git-completion.bash
+#conda activate py38
+alias lab='ssh -N -f -L localhost:8877:localhost:8888 User@128.197.62.238'
+alias spyder='/Users/senthilp/opt/anaconda3/bin/spyder'
+alias connect='ssh -v -Y senthilp@128.197.62.67'
+export FREESURFER_HOME=/Applications/freesurfer/7.1.1
+export SUBJECTS_DIR=$FREESURFER_HOME/subjects
+source $FREESURFER_HOME/SetUpFreeSurfer.sh
+
+# rsync -av senthilp@128.197.62.181:/home/senthilp
+# Git branch in prompt version 2
+#parse_git_branch() {
+#    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+#}
+#export PS1="\u@\h \W\[\033[32m\]\$(parse_git_branch)\[\033[00m\] $ "
+#alias lsd='ls -d */'
+
+#export QT_PLUGIN_PATH=/Users/senthilp/opt/anaconda3/envs/mne/lib/python3.8/site-packages/PyQt5/Qt/plugins
+#export LD_LIBRARY_PATH=/Users/senthilp/opt/anaconda3/envs/mne/lib/python3.8/site-packages/PyQt5/Qt/plugins
+#export PATH=$PATH:/Users/senthilp/opt/anaconda3/envs/mne/bin
+#export ANTSPATH=/Users/senthilp/opt/anaconda3/envs/mne/bin
+#alias matlab='/Applications/MATLAB_R2020a.app/bin/matlab'
+
+export ANTSPATH=/Users/senthilp/opt/anaconda3/bin/
